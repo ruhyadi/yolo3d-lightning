@@ -1,0 +1,129 @@
+# Project information
+site_name: YOLO3D
+site_url: https://ruhyadi.github.io/yolo3d-lightning
+site_author: Didi Ruhyadi
+site_description: >-
+  YOLO3D: 3D Object Detection with YOLO
+
+# Repository
+repo_name: ruhyadi/yolo3d-lightning
+repo_url: https://ruhyadi.github.io/yolo3d-lightning
+edit_uri: ""
+
+# Copyright
+copyright: Copyright &copy; 2020 - 2022 Didi Ruhyadi
+
+# Configuration
+theme:
+  name: material
+  language: en
+
+  # Don't include MkDocs' JavaScript
+  include_search_page: false
+  search_index_only: true
+  
+  features:
+    - content.code.annotate
+    # - content.tabs.link
+    # - header.autohide
+    # - navigation.expand
+    - navigation.indexes
+    # - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    # - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    # - toc.integrate
+  palette:
+    - scheme: default
+      primary: white
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Vampire Mode
+    - scheme: slate
+      primary: indigo
+      accent: blue 
+      toggle:
+        icon: material/weather-sunny
+        name: Beware of Your Eyes
+  font:
+    text: Noto Serif
+    code: Noto Mono
+  favicon: assets/logo.png
+  logo: assets/logo.png
+  icon:
+    repo: fontawesome/brands/github
+
+# Plugins
+plugins:
+
+# Customization
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/ruhyadi
+    - icon: fontawesome/brands/docker
+      link: https://hub.docker.com/r/ruhyadi
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/didiruhyadi
+    - icon: fontawesome/brands/instagram
+      link: https://instagram.com/didiir_
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - abbr
+  - pymdownx.snippets
+  - attr_list
+  - def_list
+  - footnotes
+  - meta
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: squidfunk
+      repo: mkdocs-material
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Page tree
+nav:
+  - Home:
+    - Home: index.md
