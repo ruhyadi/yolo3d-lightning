@@ -1,0 +1,9 @@
+# KITTI to YOLO
+
+path: ../data/KITTI/  # dataset root dir
+train: train_yolo.txt  # train images (relative to 'path') 3712 images
+val: val_yolo.txt  # val images (relative to 'path') 3768 images
+
+# Classes
+nc: 5  # number of classes
+names: ['car', 'van', 'truck', 'pedestrian', 'cyclist']
