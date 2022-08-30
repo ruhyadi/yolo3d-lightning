@@ -150,3 +150,7 @@ data/
 logs/
 .env
 .autoenv
+outputs/
+
+# model weights
+*.pt

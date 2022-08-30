@@ -1,0 +1,44 @@
+# @package _global_
+
+# specify here default training configuration
+defaults:
+  - _self_
+  - detector: yolov5.yaml
+  - model: regressor.yaml
+  - augmentation: inference_preprocessing.yaml
+
+  # debugging config (enable through command line, e.g. `python train.py debug=default)
+  - debug: null
+
+  # enable color logging
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+# run name
+name: inference
+
+# directory
+root: ${hydra:runtime.cwd}
+output_dir: ${root}/${hydra:run.dir}/inference
+
+# calib_file
+calib_file: ${root}/data/global_calib.txt
+
+# save 2D bounding box
+save_det2d: False
+
+# show and save result
+save_result: False
+
+# save result in txt
+save_txt: True
+
+# regressor weights
+regressor_weights: ${root}/weights/regressor_resnet18.pt
+
+# source directory
+source_dir: ${root}/data/demo/images
+# source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
+
+# device to inference
+device: 'cuda:0'
