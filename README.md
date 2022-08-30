@@ -24,10 +24,10 @@
 
 ## 📌&nbsp;&nbsp;Introduction
 
-Unofficial implementation of [Mousavian et al.](https://arxiv.org/abs/1612.00496) in their paper **3D Bounding Box Estimation Using Deep Learning and Geometry**. YOLO3D uses a different approach, as the detector uses **YOLOv5** which previously used Faster-RCNN, and Regressor uses **ResNet18/VGG11** which was previously VGG19.
+YOLO3D is inspired by [Mousavian et al.](https://arxiv.org/abs/1612.00496) in their paper **3D Bounding Box Estimation Using Deep Learning and Geometry**. YOLO3D uses a different approach, as the detector uses [YOLOv5](https://github.com/ultralytics/yolov5) which previously used Faster-RCNN, and Regressor uses ResNet18/VGG11 which was previously VGG19.
 
 ## 🚀&nbsp;&nbsp;Quickstart
-> We use hydra as the config manager; if you are unfamiliar with hydra, you can visit the official website or see the tutorial on this web.
+> YOLO3D use hydra as the config manager; please follow [official website](https://hydra.cc/) or [ashleve/lightning-hydra-template](https://github.com/ashleve/lightning-hydra-template).
 
 ### 🍿&nbsp;&nbsp;Inference
 You can use pretrained weight from [Release](https://github.com/ruhyadi/yolo3d-lightning/releases), you can download it using script `get_weights.py`:
@@ -45,69 +45,92 @@ python inference.py \
   regressor_weights="./weights/regressor_resnet18.pt"
 ```
 
-### ⚔️&nbsp;&nbsp;Training
+## ⚔️ Training
 There are two models that will be trained here: **detector** and **regressor**. For now, the detector model that can be used is only **YOLOv5**, while the regressor model can use all models supported by **Torchvision**.
 
-#### 🧭&nbsp;&nbsp;Training YOLOv5 Detector
-The first step is to change the `label_2` format from KITTI to YOLO. You can use the following `src/kitti_to_yolo.py`.
+### 💽 Dataset Preparation
+For now, YOLO3D only supports the [KITTI dataset](http://www.cvlibs.net/datasets/kitti/). Going forward, we will try to add support to the Lyft and nuScene datasets.
+#### 1. Download KITTI Dataset
+You can download KITTI dataset from [official website](http://www.cvlibs.net/datasets/kitti/). After that, extract dataset to `data/KITTI`. Since we will be using two models, it is highly recommended to rename `images_2` to `images`.
 
 ```bash
-cd yolo3d-lightning/src
-python kitti_to_yolo.py \
-  --dataset_path ../data/KITTI/training/
-  --classes ["car", "van", "truck", "pedestrian", "cyclist"]
-  --img_width 1224
+.
+├── data
+│   └── KITTI
+│       ├── calib
+│       ├── images # original images_2
+│       └── labels_2
+```
+
+#### 2. Generate YOLO Labels
+
+The kitti label format on `labels` is different from the format required by the YOLO model. Therefore, we have to create a YOLO format from a KITTI format. The author has provided a `script/kitti_to_yolo.py` that can be used.
+
+```bash
+python script/kitti_to_yolo.py \
+  --dataset_path ./data/KITTI \
+  --classes car, van, truck, pedestrian, cyclist \
+  --img_width 1224 \
   --img_height 370
 ```
-
-The next step is to follow the [wiki provided by ultralytics](https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data). **Note:** *readme will updated in future*.
-
-#### 🪀&nbsp;&nbsp;Training Regessor
-Selanjutnya, kamu dapat melakukan training model regressor. Model regressor yang dapat dipakai bisa mengacu pada yang tersedia di `torchvision`, atau kamu bisa mengkustomnya sendiri. 
-
-Langkah pertama adalah membuat train dan validation sets. Kamu dapat menggunakan `script/generate_sets.py`:
+The script will generate a `labels` folder containing the labels for each image in YOLO format.
 
 ```bash
-cd yolo3d-lightning/script
-python generate_sets.py \
-  --images_path ../data/KITTI/training/images # or image_2
-  --dump_dir ../data/KITTI/training
-  --postfix _80
-  --train_size 0.8
+.
+├── data
+│   └── KITTI
+│       ├── calib
+│       ├── images    # original images_2
+|       ├── labels_2  # kitti labels
+│       └── labels    # yolo labels
 ```
 
-Pada langkah selanjutnya, kita hanya akan menggunakan model yang ada di `torchvision` saja. Langkah termudah adalah dengan mengubah configurasi di `configs.model.regressor.yaml`, seperti di bawah:
-
-```yaml
-_target_: src.models.regressor.RegressorModel
-
-net:
-  _target_: src.models.components.utils.RegressorNet
-  backbone:
-    _target_: torchvision.models.resnet18 # edit this
-    pretrained: True # maybe this too
-  bins: 2
-
-lr: 0.001
-momentum: 0.9
-w: 0.4
-alpha: 0.6
-```
-
-Langkah selanjutnya adalah dengan membuat konfigurasi experiment pada `configs/experiment/your_exp.yaml`. Jika bingung, kamu dapat mengacu pada [`configs/experiment/demo.yaml`](./configs/experiment/demo.yaml). 
-
-Setelah konfigurasi experiment dibuat. Kamu dapat dengan mudah menjalankan perintah `train.py`, seperti berikut:
+The next thing is to generate a sets of images/labels training and validation, these sets are also used as partitions to divide the dataset. The author has provided a `script/generate_sets.py` that can be used.
 
 ```bash
-cd yolo3d-lightning
+python script/generate_sets.py \
+  --images_path ./data/KITTI/images \
+  --dump_dir ./data/KITTI \
+  --postfix _yolo \
+  --train_size 0.8 \
+  --is_yolo
+```
+
+### 🚀 Training Detector Model
+> Right now author just use YOLOv5 model
+
+For YOLOv5 training on a **single GPU**, you can use the command below:
+
+```bash
+cd yolov5
 python train.py \
-  experiment=demo
+    --data ../configs/detector/yolov5_kitti.yaml \
+    --weights yolov5s.pt \
+    --img 640 
 ```
 
+As for training on **multiple GPUs**, you can use the command below:
 
+```bash
+cd yolov5
+python -m torch.distributed.launch \
+    --nproc_per_node 4 train.py \
+    --epochs 10 \
+    --batch 64 \
+    --data ../configs/detector/yolov5_kitti.yaml \
+    --weights yolov5s.pt \
+    --device 0,1,2,3
+```
 
+### 🪀 Training Regessor Model
+> ⚠️ Under development
 
+You can use all the models available on **Torchvision** by adding some configuration to `src/models/components/base.py`. The current author has provided **ResNet18** and **VGG11** which can be used directly.
 
+```bash
+python src/train.py \
+  experiment=sample
+```
 
 ## ❤️&nbsp;&nbsp;Acknowledgement
 
