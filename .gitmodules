@@ -1,0 +1,4 @@
+[submodule "yolov5"]
+	path = yolov5
+	url = https://github.com/ruhyadi/yolov5
+	branch = yolo3d
