@@ -7,13 +7,13 @@ defaults:
   - override /datamodule: kitti_datamodule.yaml
   - override /model: regressor.yaml
   - override /callbacks: default.yaml
-  - override /logger: wandb.yaml
+  - override /logger: null
   - override /trainer: dgx.yaml
 
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
 
-seed: 12345
+seed: 420
 
 trainer:
   min_epochs: 1
@@ -28,4 +28,4 @@ datamodule:
   val_sets: ${paths.data_dir}/val_80.txt
 
 # name of the run determines folder name in logs
-name: "demo_training_regressor"
+name: "sample_train"

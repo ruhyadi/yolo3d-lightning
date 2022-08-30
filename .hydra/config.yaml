@@ -1,0 +1,92 @@
+task_name: train
+tags:
+- dev
+train: true
+test: false
+ckpt_path: null
+seed: 420
+datamodule:
+  _target_: src.datamodules.kitti_datamodule.KITTIDataModule
+  dataset_path: ${paths.data_dir}
+  train_sets: ${paths.data_dir}/train_80.txt
+  val_sets: ${paths.data_dir}/val_80.txt
+  batch_size: 128
+  num_worker: 32
+model:
+  _target_: src.models.regressor.RegressorModel
+  net:
+    _target_: src.models.components.base.RegressorNet
+    backbone:
+      _target_: torchvision.models.resnet18
+      pretrained: true
+    bins: 2
+  lr: 0.001
+  momentum: 0.9
+  w: 0.4
+  alpha: 0.6
+callbacks:
+  model_checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: ${paths.output_dir}/checkpoints
+    filename: epoch_{epoch:03d}
+    monitor: val/loss
+    verbose: false
+    save_last: true
+    save_top_k: 1
+    mode: min
+    auto_insert_metric_name: false
+    save_weights_only: false
+    every_n_train_steps: null
+    train_time_interval: null
+    every_n_epochs: null
+    save_on_train_epoch_end: null
+  early_stopping:
+    _target_: pytorch_lightning.callbacks.EarlyStopping
+    monitor: val/loss
+    min_delta: 0.0
+    patience: 100
+    verbose: false
+    mode: min
+    strict: true
+    check_finite: true
+    stopping_threshold: null
+    divergence_threshold: null
+    check_on_train_epoch_end: null
+  model_summary:
+    _target_: pytorch_lightning.callbacks.RichModelSummary
+    max_depth: -1
+  rich_progress_bar:
+    _target_: pytorch_lightning.callbacks.RichProgressBar
+trainer:
+  _target_: pytorch_lightning.Trainer
+  default_root_dir: ${paths.output_dir}
+  min_epochs: 1
+  max_epochs: 2
+  accelerator: gpu
+  devices:
+  - 1
+  - 2
+  - 3
+  - 4
+  deterministic: false
+  strategy: ddp
+  num_nodes: 1
+  sync_batchnorm: true
+  limit_train_batches: 0.2
+  limit_val_batches: 0.2
+  gpus:
+  - 0
+  - 1
+  - 2
+  - 3
+paths:
+  root_dir: ${oc.env:PROJECT_ROOT}
+  data_dir: ${paths.root_dir}/data/KITTI
+  log_dir: ${paths.root_dir}/logs/
+  output_dir: ${hydra:runtime.output_dir}
+  work_dir: ${hydra:runtime.cwd}
+extras:
+  ignore_warnings: false
+  enforce_tags: true
+  print_config: true
+name: sample_train

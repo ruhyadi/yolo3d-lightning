@@ -7,8 +7,9 @@ defaults:
   - override /datamodule: kitti_datamodule.yaml
   - override /model: regressor.yaml
   - override /callbacks: default.yaml
-  - override /logger: wandb.yaml
-  - override /trainer: dgx.yaml
+  - override /logger: mlflow.yaml
+  - override /trainer: default.yaml
+
 
 # all parameters below will be merged with parameters from default configurations set above
 # this allows you to overwrite only specified parameters
@@ -24,8 +25,8 @@ trainer:
   strategy: ddp
 
 datamodule:
-  train_sets: ${paths.data_dir}/train_80.txt
-  val_sets: ${paths.data_dir}/val_80.txt
+  train_sets: ${data_dir}/train_80.txt
+  val_sets: ${data_dir}/val_80.txt
 
 # name of the run determines folder name in logs
-name: "demo_training_regressor"
+name: "mlflow_logging"
