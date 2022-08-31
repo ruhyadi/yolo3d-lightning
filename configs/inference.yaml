@@ -34,10 +34,10 @@ save_result: True
 save_txt: False
 
 # regressor weights
-regressor_weights: ${root}/weights/sample_regressor.onnx
+regressor_weights: ${root}/weights/sample_regressor.xml
 
 # inference type
-inference_type: onnx # [pytorch, onnx, tensorrt]
+inference_type: openvino # [pytorch, onnx, openvino, tensorrt]
 
 # source directory
 source_dir: ${root}/data/demo/images

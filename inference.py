@@ -24,6 +24,7 @@ import pyrootutils
 import src.utils
 
 import onnxruntime
+import openvino.runtime as ov
 
 dotenv.load_dotenv(override=True)
 log = src.utils.get_pylogger(__name__)
@@ -47,14 +48,21 @@ def inference(config: DictConfig):
     detector = hydra.utils.instantiate(config.detector)
 
     # init regressor model
-    log.info(f"Instantiating regressor <{config.model._target_}>")
     if config.get("inference_type") == "pytorch":
+        log.info(f"Instantiating regressor <{config.model._target_}>")
         regressor: LightningModule = hydra.utils.instantiate(config.model)
         regressor.load_state_dict(torch.load(config.get("regressor_weights")))
         regressor.eval().to(config.get("device"))
     elif config.get("inference_type") == "onnx":
+        log.info(f"Instantiating ONNX regressor <{config.get('regressor_weights').split('/')[-1]}>")
         regressor = onnxruntime.InferenceSession(config.get("regressor_weights"), providers=providers)
         input_name = regressor.get_inputs()[0].name
+    elif config.get("inference_type") == "openvino":
+        log.info(f"Instantiating OpenVINO regressor <{config.get('regressor_weights').split('/')[-1]}>")
+        core = ov.Core()
+        model = core.read_model(config.get("regressor_weights"))
+        regressor = core.compile_model(model, 'CPU') #TODO: change to config.get("device")
+        infer_req = regressor.create_infer_request()
 
     # init preprocessing
     log.info(f"Instantiating preprocessing")
@@ -86,7 +94,6 @@ def inference(config: DictConfig):
             # batching img
             crop = crop.reshape((1, *crop.shape)).to(config.get("device"))
             # regress 2D bbox
-            print("Crop shape:", crop.shape)
             if config.get("inference_type") == "pytorch":
                 [orient, conf, dim] = regressor(crop)
                 orient = orient.cpu().detach().numpy()[0, :, :]
@@ -98,6 +105,11 @@ def inference(config: DictConfig):
                 orient = orient[0]
                 conf = conf[0]
                 dim = dim[0]
+            elif config.get("inference_type") == "openvino":
+                infer_req.infer(inputs={0: crop.cpu().numpy()})
+                orient = infer_req.get_output_tensor(0).data[0]
+                conf = infer_req.get_output_tensor(1).data[0]
+                dim = infer_req.get_output_tensor(2).data[0]
 
             # refinement dimension
             try:
