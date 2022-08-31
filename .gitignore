@@ -151,6 +151,18 @@ logs/
 .env
 .autoenv
 outputs/
+artifacts/
+wandb/
 
 # model weights
 *.pt
+*.ckpt
+*.onnx
+*.bin
+*.pth
+*.pkl
+*.h5
+*.hdf5
+*.mapping
+*.xml
+src/models/components/utils.py

@@ -82,7 +82,7 @@ Pada langkah selanjutnya, kita hanya akan menggunakan model yang ada di `torchvi
 _target_: src.models.regressor.RegressorModel
 
 net:
-  _target_: src.models.components.utils.RegressorNet
+  _target_: src.models.components.base.RegressorNet
   backbone:
     _target_: torchvision.models.resnet18 # edit this
     pretrained: True # maybe this too

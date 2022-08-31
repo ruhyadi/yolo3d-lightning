@@ -1,0 +1,36 @@
+# @package _global_
+
+# specify here default training configuration
+defaults:
+  - _self_
+  - model: regressor.yaml
+
+  # enable color logging
+  - override hydra/hydra_logging: colorlog
+  - override hydra/job_logging: colorlog
+
+# pretty print config at the start of the run using Rich library
+print_config: True
+
+# disable python warnings if they annoy you
+ignore_warnings: True
+
+# root
+root: ${hydra:runtime.cwd}
+
+# checkpoint directory
+checkpoint_dir: ${root}/weights/epoch_022.ckpt
+
+# dump dir
+dump_dir: ${root}/weights
+
+# input sample shape
+input_sample:
+  __target__: torch.randn
+  size: (1, 3, 224, 224)
+
+# convert to
+convert_to: "onnx" # [pytorch, torchscript, onnx, tensorrt]
+
+# model name without extension
+name: ${dump_dir}/sample_regressor
