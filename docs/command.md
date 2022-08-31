@@ -36,3 +36,11 @@ python train.py \
     --weights yolov5s.pt \
     --img 640 
 ```
+
+## Hyperparameter Tuning with Hydra
+
+```bash
+python src/train.py -m \
+    hparams_search=regressor_optuna \
+    experiment=sample_optuna
+```

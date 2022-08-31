@@ -14,6 +14,8 @@ optimized_metric: "val/loss"
 # it optimizes for value returned from function with @hydra.main decorator
 # docs: https://hydra.cc/docs/next/plugins/optuna_sweeper
 hydra:
+  mode: "MULTIRUN"
+
   sweeper:
     _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
 
@@ -37,7 +39,7 @@ hydra:
     # docs: https://optuna.readthedocs.io/en/stable/reference/samplers.html
     sampler:
       _target_: optuna.samplers.TPESampler
-      seed: 12345
+      seed: 420
       n_startup_trials: 10 # number of random sampling runs before optimization starts
 
     # define range of hyperparameters
