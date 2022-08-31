@@ -23,12 +23,18 @@ import sys
 import pyrootutils
 import src.utils
 
+import onnxruntime
+
 dotenv.load_dotenv(override=True)
 log = src.utils.get_pylogger(__name__)
 root = pyrootutils.setup_root(__file__, dotenv=True, pythonpath=True)
 
 @hydra.main(version_base="1.2", config_path=root / "configs", config_name="inference.yaml")
 def inference(config: DictConfig):
+
+    # ONNX provider
+    providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] \
+                if config.get("device") == "cuda" else ['CPUExecutionProvider']
 
     # use global calib file
     proj_matrix = Calib.get_P(config.get("calib_file"))
@@ -42,9 +48,13 @@ def inference(config: DictConfig):
 
     # init regressor model
     log.info(f"Instantiating regressor <{config.model._target_}>")
-    regressor: LightningModule = hydra.utils.instantiate(config.model)
-    regressor.load_state_dict(torch.load(config.get("regressor_weights")))
-    regressor.eval().to(config.get("device"))
+    if config.get("inference_type") == "pytorch":
+        regressor: LightningModule = hydra.utils.instantiate(config.model)
+        regressor.load_state_dict(torch.load(config.get("regressor_weights")))
+        regressor.eval().to(config.get("device"))
+    elif config.get("inference_type") == "onnx":
+        regressor = onnxruntime.InferenceSession(config.get("regressor_weights"), providers=providers)
+        input_name = regressor.get_inputs()[0].name
 
     # init preprocessing
     log.info(f"Instantiating preprocessing")
@@ -76,10 +86,19 @@ def inference(config: DictConfig):
             # batching img
             crop = crop.reshape((1, *crop.shape)).to(config.get("device"))
             # regress 2D bbox
-            [orient, conf, dim] = regressor(crop)
-            orient = orient.cpu().detach().numpy()[0, :, :]
-            conf = conf.cpu().detach().numpy()[0, :]
-            dim = dim.cpu().detach().numpy()[0, :]
+            print("Crop shape:", crop.shape)
+            if config.get("inference_type") == "pytorch":
+                [orient, conf, dim] = regressor(crop)
+                orient = orient.cpu().detach().numpy()[0, :, :]
+                conf = conf.cpu().detach().numpy()[0, :]
+                dim = dim.cpu().detach().numpy()[0, :]
+            elif config.get("inference_type") == "onnx":
+                # TODO: inference with GPU
+                [orient, conf, dim] = regressor.run(None, {input_name: crop.cpu().numpy()})
+                orient = orient[0]
+                conf = conf[0]
+                dim = dim[0]
+
             # refinement dimension
             try:
                 dim += class_averages.get_item(class_to_labels(det["cls"].cpu().numpy()))

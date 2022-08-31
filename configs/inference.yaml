@@ -28,13 +28,16 @@ calib_file: ${root}/data/global_calib.txt
 save_det2d: False
 
 # show and save result
-save_result: False
+save_result: True
 
 # save result in txt
-save_txt: True
+save_txt: False
 
 # regressor weights
-regressor_weights: ${root}/weights/regressor_resnet18.pt
+regressor_weights: ${root}/weights/sample_regressor.onnx
+
+# inference type
+inference_type: onnx # [pytorch, onnx, tensorrt]
 
 # source directory
 source_dir: ${root}/data/demo/images
