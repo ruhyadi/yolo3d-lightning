@@ -136,7 +136,7 @@ def inference(config: DictConfig):
             )
             # plot 3d bbox and bev
             plot3dbev.plot(
-                img = img_draw,
+                img=img_draw,
                 class_object=det["label"].split(" ")[0],
                 bbox=box,
                 dim=dim,
@@ -144,7 +144,7 @@ def inference(config: DictConfig):
                 rot_y=orient,
             )
 
-            # plot 3d bbox
+            # # plot 3d bbox
             # plot_3d_box(
             #     img=img_draw,
             #     cam_to_img=proj_matrix,
@@ -157,7 +157,7 @@ def inference(config: DictConfig):
                 # save txt results
                 results_txt = {
                     "type": det["label"].split(" ")[0].capitalize(),
-                    "truncated": "-1.00", # set default to -1.00
+                    "truncated": "0.00", # set default to 0.00
                     "occluded": -1,
                     "alpha": round(alpha, 2),
                     "bbox": " ".join(str(np.round(x, 2)) for x in box),

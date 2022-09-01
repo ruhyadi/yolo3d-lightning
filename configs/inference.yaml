@@ -31,13 +31,13 @@ save_det2d: False
 save_result: True
 
 # save result in txt
-save_txt: False
+save_txt: True
 
 # regressor weights
-regressor_weights: ${root}/weights/sample_regressor.xml
+regressor_weights: ${root}/weights/regressor_resnet18.pt
 
 # inference type
-inference_type: openvino # [pytorch, onnx, openvino, tensorrt]
+inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
 
 # source directory
 source_dir: ${root}/data/demo/images

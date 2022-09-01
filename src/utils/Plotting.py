@@ -576,9 +576,13 @@ class Plot3DBoxBev:
         y_corners = [0, 0, h, h, 0, 0, h, h]  # -h
         z_corners = [0, 0, 0, w, w, w, w, 0]  # -w/2
 
-        x_corners = [i - l / 2 for i in x_corners]
-        y_corners = [i - h for i in y_corners]
-        z_corners = [i - w / 2 for i in z_corners]
+        x_corners += -l / 2
+        y_corners += -h
+        z_corners += -w / 2
+
+        # x_corners = [i - l / 2 for i in x_corners]
+        # y_corners = [i - h for i in y_corners]
+        # z_corners = [i - w / 2 for i in z_corners]
 
         corners_3D = np.array([x_corners, y_corners, z_corners])
         corners_3D = R.dot(corners_3D)
@@ -680,4 +684,3 @@ if __name__ == "__main__":
     )
 
     plot.visualization()
-
