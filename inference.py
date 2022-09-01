@@ -26,6 +26,8 @@ import src.utils
 from src.utils.math2 import compute_orientaion, recover_angle, translation_constraints
 from src.utils.utils import KITTIObject
 
+import time
+
 log = src.utils.get_pylogger(__name__)
 
 try: 
@@ -49,11 +51,23 @@ def inference(config: DictConfig):
     # dimension averages #TODO: depricated
     class_averages = ClassAverages()
 
+    # time
+    avg_time = {
+        "initiate_detector": 0,
+        "initiate_regressor": 0,
+        "detector": 0,
+        "regressor": 0,
+        "plotting": 0,
+    }
+
     # initialize detector model
+    start_detector = time.time()
     log.info(f"Instantiating detector <{config.detector._target_}>")
     detector = hydra.utils.instantiate(config.detector)
+    avg_time["initiate_detector"] = time.time() - start_detector
 
     # initialize regressor model
+    start_regressor = time.time()
     if config.get("inference_type") == "pytorch":
         # pytorch regressor model
         log.info(f"Instantiating regressor <{config.model._target_}>")
@@ -72,6 +86,7 @@ def inference(config: DictConfig):
         model = core.read_model(config.get("regressor_weights"))
         regressor = core.compile_model(model, 'CPU') #TODO: change to config.get("device")
         infer_req = regressor.create_infer_request()
+    avg_time["initiate_regressor"] = time.time() - start_regressor
 
     # initialize preprocessing transforms
     log.info(f"Instantiating Preprocessing Transforms")
@@ -85,18 +100,20 @@ def inference(config: DictConfig):
     # Create output directory
     os.makedirs(config.get("output_dir"), exist_ok=True)
 
-    # Initialize object and plotting modules
-    plot3dbev = Plot3DBoxBev(P2)
-
     # TODO: inference on video
     # loop thru images
     imgs_path = sorted(glob(os.path.join(config.get("source_dir"), "*")))
     for img_path in imgs_path:
+        # Initialize object and plotting modules
+        plot3dbev = Plot3DBoxBev(P2)
+
         img_name = img_path.split("/")[-1].split(".")[0]
         img = cv2.imread(img_path, cv2.IMREAD_COLOR)
-        # img_draw = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2RGB)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         # detect object with Detector
+        start_detect = time.time()
         dets = detector(img).crop(save=config.get("save_det2d"))
+        avg_time["detector"] += time.time() - start_detect
 
         # dimension averages #TODO: depricated
         DIMENSION = []
@@ -115,6 +132,7 @@ def inference(config: DictConfig):
             crop = preprocess(cv2.resize(det["im"], (224, 224)))
             crop = crop.reshape((1, *crop.shape)).to(config.get("device"))
 
+            start_reg = time.time()
             # regress 2D bbox with Regressor
             if config.get("inference_type") == "pytorch":
                 [orient, conf, dim] = regressor(crop)
@@ -150,16 +168,36 @@ def inference(config: DictConfig):
             output_line.append(1.0)
             output_line = " ".join([str(i) for i in output_line]) + "\n"
 
+            avg_time["regressor"] += time.time() - start_reg
+
             # write results
             if config.get("save_txt"):
                 with open(f"{config.get('output_dir')}/{img_name}.txt", "a") as f:
                     f.write(output_line)
+
+
+            if config.get("save_result"):
+                start_plot = time.time()
+                plot3dbev.plot(
+                    img=img,
+                    class_object=obj.name.lower(),
+                    bbox=[obj.xmin, obj.ymin, obj.xmax, obj.ymax],
+                    dim=[obj.h, obj.w, obj.l],
+                    loc=[obj.tx, obj.ty, obj.tz],
+                    rot_y=obj.rot_global,
+                )
+                avg_time["plotting"] += time.time() - start_plot
 
         # save images
         if config.get("save_result"):
             # cv2.imwrite(f'{config.get("output_dir")}/{name}.png', img_draw)
             plot3dbev.save_plot(config.get("output_dir"), img_name)
 
+    # print time
+    for key, value in avg_time.items():
+        if key in ["detector", "regressor", "plotting"]:
+            avg_time[key] = value / len(imgs_path)
+    log.info(f"Average Time: {avg_time}")
 
 def detector_yolov5(model_path: str, cfg_path: str, classes: int, device: str):
     """YOLOv5 detector model"""

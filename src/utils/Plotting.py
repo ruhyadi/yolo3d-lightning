@@ -269,7 +269,7 @@ class Plot3DBox:
         pred_path: str = None,
         label_path: str = None,
         calib_path: str = None,
-        vehicle_list: list = ["car", "truck", "bus", "motorcycle", "bicycle"],
+        vehicle_list: list = ["car", "truck", "bus", "motorcycle", "bicycle", "pedestrian"],
         mode: str = "training",
         save_path: str = None,
     ) -> None:
@@ -407,11 +407,13 @@ class Plot3DBox:
     def visualization(self):
 
         for index in range(self.start_frame, self.end_frame):
-            print(self.dataset)
             image_file = os.path.join(self.image_path, self.dataset[index] + ".png")
             label_file = os.path.join(self.label_path, self.dataset[index] + ".txt")
             prediction_file = os.path.join(self.pred_path, self.dataset[index] + ".txt")
-            calibration_file = os.path.join(self.calib_path, self.dataset[index] + ".txt")
+            if self.calib_path.endswith(".txt"):
+                calibration_file = self.calib_path
+            else:
+                calibration_file = os.path.join(self.calib_path, self.dataset[index] + ".txt")
             for line in open(calibration_file):
                 if "P2" in line:
                     P2 = line.split(" ")
@@ -495,7 +497,7 @@ class Plot3DBoxBev:
     def __init__(
         self,
         proj_matrix = None, # projection matrix P2
-        object_list = ["car", "pedestrian", "truck", "cyclist"],
+        object_list = ["car", "pedestrian", "truck", "cyclist", "motorcycle", "bus"],
         
     ) -> None:
 
@@ -516,6 +518,8 @@ class Plot3DBoxBev:
             "pedestrian": "green",
             "truck": "yellow",
             "cyclist": "red",
+            "motorcycle": "cyan",
+            "bus": "magenta",
         }
 
     def compute_bev(self, dim, loc, rot_y):
@@ -579,10 +583,6 @@ class Plot3DBoxBev:
         x_corners += -l / 2
         y_corners += -h
         z_corners += -w / 2
-
-        # x_corners = [i - l / 2 for i in x_corners]
-        # y_corners = [i - h for i in y_corners]
-        # z_corners = [i - w / 2 for i in z_corners]
 
         corners_3D = np.array([x_corners, y_corners, z_corners])
         corners_3D = R.dot(corners_3D)
@@ -675,10 +675,10 @@ class Plot3DBoxBev:
 if __name__ == "__main__":
 
     plot = Plot3DBox(
-        image_path="./data/demo/bev/images",
-        label_path="./data/demo/bev/label",
-        calib_path="./data/demo/bev/calib",
-        pred_path="./data/demo/bev/label",
+        image_path="./data/demo/videos/2011_09_26/image_02/data",
+        label_path="./outputs/2022-09-01/22-12-09/inference",
+        calib_path="./data/calib_kitti_images.txt",
+        pred_path="./outputs/2022-09-01/22-12-09/inference",
         save_path="./data/results",
         mode="training",
     )
