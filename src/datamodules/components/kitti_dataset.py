@@ -3,6 +3,7 @@ Dataset modules for load kitti dataset and convert to yolo3d format
 """
 
 from pathlib import Path
+import os
 
 import numpy as np
 import cv2
@@ -207,6 +208,13 @@ class KITTIDataset(Dataset):
         }
 
         return label
+
+    def get_averages(self):
+        dims_avg = {key: np.array([0, 0, 0]) for key in self.class_list}
+        dims_count = {key: 0 for key in self.class_list}
+
+        for i in range(len(os.listdir(self.image_path))):
+            current_data = self.image_path[i]
 
 
 class DetectedObject:
