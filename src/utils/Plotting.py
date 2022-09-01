@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from matplotlib.path import Path
 import cv2
 from PIL import Image
 import numpy as np
@@ -442,7 +442,7 @@ class Plot3DBox:
                     trunc_level = 1 if self.mode == "training" else 255
 
                     # truncated object in dataset is not observable
-                    if line_p[0] in self.vehicle_list and truncated < trunc_level:
+                    if line_p[0].lower() in self.vehicle_list and truncated < trunc_level:
                         color = "green"
                         if line_p[0] == "Cyclist":
                             color = "yellow"
@@ -479,8 +479,7 @@ class Plot3DBox:
             for text in legend.get_texts():
                 plt.setp(text, color="w")
 
-            print(self.dataset[index])
-            if self.save_path is not None:
+            if self.save_path is None:
                 plt.show()
             else:
                 fig.savefig(
@@ -491,6 +490,183 @@ class Plot3DBox:
                 )
             # video_writer.write(np.uint8(fig))
 
+class Plot3DBoxBev:
+    """Plot 3D bounding box and bird eye view"""
+    def __init__(
+        self,
+        proj_matrix = None, # projection matrix P2
+        object_list = ["car", "pedestrian", "truck", "cyclist"],
+        
+    ) -> None:
+
+        self.proj_matrix = proj_matrix
+        self.object_list = object_list
+
+        self.fig = plt.figure(figsize=(20.00, 5.12), dpi=100)
+        gs = GridSpec(1, 4)
+        gs.update(wspace=0)
+        self.ax = self.fig.add_subplot(gs[0, :3])
+        self.ax2 = self.fig.add_subplot(gs[0, 3:])
+
+        self.shape = 900
+        self.scale = 15
+
+        self.COLOR = {
+            "car": "blue",
+            "pedestrian": "green",
+            "truck": "yellow",
+            "cyclist": "red",
+        }
+
+    def compute_bev(self, dim, loc, rot_y):
+        """compute bev"""
+        # convert dimension, location and rotation
+        h = dim[0] * self.scale
+        w = dim[1] * self.scale
+        l = dim[2] * self.scale
+        x = loc[0] * self.scale
+        y = loc[1] * self.scale
+        z = loc[2] * self.scale
+        rot_y = np.float64(rot_y)
+
+        R = np.array([[-np.cos(rot_y), np.sin(rot_y)], [np.sin(rot_y), np.cos(rot_y)]])
+        t = np.array([x, z]).reshape(1, 2).T
+        x_corners = [0, l, l, 0]  # -l/2
+        z_corners = [w, w, 0, 0]  # -w/2
+        x_corners += -w / 2
+        z_corners += -l / 2
+        # bounding box in object coordinate
+        corners_2D = np.array([x_corners, z_corners])
+        # rotate
+        corners_2D = R.dot(corners_2D)
+        # translation
+        corners_2D = t - corners_2D
+        # in camera coordinate
+        corners_2D[0] += int(self.shape / 2)
+        corners_2D = (corners_2D).astype(np.int16)
+        corners_2D = corners_2D.T
+
+        return np.vstack((corners_2D, corners_2D[0, :]))
+
+    def draw_bev(self, dim, loc, rot_y):
+        """draw bev"""
+
+        # gt_corners_2d = self.compute_bev(self.gt_dim, self.gt_loc, self.gt_rot_y)
+        pred_corners_2d = self.compute_bev(dim, loc, rot_y)
+
+        codes = [Path.LINETO] * pred_corners_2d.shape[0]
+        codes[0] = Path.MOVETO
+        codes[-1] = Path.CLOSEPOLY
+        pth = Path(pred_corners_2d, codes)
+        patch = patches.PathPatch(pth, fill=False, color="green", label="prediction")
+        self.ax2.add_patch(patch)
+
+    def compute_3dbox(self, bbox, dim, loc, rot_y):
+        """compute 3d box"""
+        # 2d bounding box
+        xmin, ymin = int(bbox[0]), int(bbox[1])
+        xmax, ymax = int(bbox[2]), int(bbox[3])
+
+        # convert dimension, location
+        h, w, l = dim[0], dim[1], dim[2]
+        x, y, z = loc[0], loc[1], loc[2]
+
+        R = np.array([[np.cos(rot_y), 0, np.sin(rot_y)], [0, 1, 0], [-np.sin(rot_y), 0, np.cos(rot_y)]])
+        x_corners = [0, l, l, l, l, 0, 0, 0]  # -l/2
+        y_corners = [0, 0, h, h, 0, 0, h, h]  # -h
+        z_corners = [0, 0, 0, w, w, w, w, 0]  # -w/2
+
+        x_corners = [i - l / 2 for i in x_corners]
+        y_corners = [i - h for i in y_corners]
+        z_corners = [i - w / 2 for i in z_corners]
+
+        corners_3D = np.array([x_corners, y_corners, z_corners])
+        corners_3D = R.dot(corners_3D)
+        corners_3D += np.array([x, y, z]).reshape(3, 1)
+
+        corners_3D_1 = np.vstack((corners_3D, np.ones((corners_3D.shape[-1]))))
+        corners_2D = self.proj_matrix.dot(corners_3D_1)
+        corners_2D = corners_2D / corners_2D[2]
+        corners_2D = corners_2D[:2]
+
+        return corners_2D
+
+    def draw_3dbox(self, class_object, bbox, dim, loc, rot_y):
+        """draw 3d box"""
+        color = self.COLOR[class_object]
+        corners_2D = self.compute_3dbox(bbox, dim, loc, rot_y)
+
+        # draw all lines through path
+        # https://matplotlib.org/users/path_tutorial.html
+        bb3d_lines_verts_idx = [0, 1, 2, 3, 4, 5, 6, 7, 0, 5, 4, 1, 2, 7, 6, 3]
+        bb3d_on_2d_lines_verts = corners_2D[:, bb3d_lines_verts_idx]
+        verts = bb3d_on_2d_lines_verts.T
+        codes = [Path.LINETO] * verts.shape[0]
+        codes[0] = Path.MOVETO
+        pth = Path(verts, codes)
+        patch = patches.PathPatch(pth, fill=False, color=color, linewidth=2)
+
+        width = corners_2D[:, 3][0] - corners_2D[:, 1][0]
+        height = corners_2D[:, 2][1] - corners_2D[:, 1][1]
+        # put a mask on the front
+        front_fill = patches.Rectangle((corners_2D[:, 1]), width, height, fill=True, color=color, alpha=0.4)
+        self.ax.add_patch(patch)
+        self.ax.add_patch(front_fill)
+
+    def plot(
+        self,
+        img = None,
+        class_object: str = None,
+        bbox = None, # bbox 2d [xmin, ymin, xmax, ymax]
+        dim = None, # dimension of the box (l, w, h)
+        loc = None, # location of the box (x, y, z)
+        rot_y = None, # rotation of the box around y-axis
+    ):
+        """plot 3d bbox and bev"""
+        # initialize bev image
+        bev_img = np.zeros((self.shape, self.shape, 3), np.uint8)
+
+        # loop through all detections
+        if class_object in self.object_list:
+            self.draw_3dbox(class_object, bbox, dim, loc, rot_y)
+            self.draw_bev(dim, loc, rot_y)
+
+        # visualize 3D bounding box
+        self.ax.imshow(img)
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+
+        # plot camera view range
+        x1 = np.linspace(0, self.shape / 2)
+        x2 = np.linspace(self.shape / 2, self.shape)
+        self.ax2.plot(x1, self.shape / 2 - x1, ls="--", color="grey", linewidth=1, alpha=0.5)
+        self.ax2.plot(x2, x2 - self.shape / 2, ls="--", color="grey", linewidth=1, alpha=0.5)
+        self.ax2.plot(self.shape / 2, 0, marker="+", markersize=16, markeredgecolor="red")
+
+        # visualize bird eye view (bev)
+        self.ax2.imshow(bev_img, origin="lower")
+        self.ax2.set_xticks([])
+        self.ax2.set_yticks([])
+
+        # add legend
+        # handles, labels = ax2.get_legend_handles_labels()
+        # legend = ax2.legend(
+        #     [handles[0], handles[1]],
+        #     [labels[0], labels[1]],
+        #     loc="lower right",
+        #     fontsize="x-small",
+        #     framealpha=0.2,
+        # )
+        # for text in legend.get_texts():
+        #     plt.setp(text, color="w")
+
+    def save_plot(self, path, name):
+        self.fig.savefig(
+            os.path.join(path, f"{name}.png"),
+            dpi=self.fig.dpi,
+            bbox_inches="tight",
+            pad_inches=0.0,
+        )
 
 if __name__ == "__main__":
 

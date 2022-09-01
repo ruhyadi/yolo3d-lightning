@@ -14,6 +14,7 @@ from src.utils.ClassAverages import ClassAverages
 from src.utils.Plotting import calc_alpha, plot_3d_box
 from src.utils.Math import calc_location
 from src.utils.Plotting import calc_theta_ray
+from src.utils.Plotting import Plot3DBoxBev
 
 import dotenv
 import hydra
@@ -76,6 +77,9 @@ def inference(config: DictConfig):
     if not os.path.exists(config.get("output_dir")):
         os.makedirs(config.get("output_dir"))
 
+    # Initialize plotting module
+    plot3dbev = Plot3DBoxBev(proj_matrix)
+
     # TODO: able inference on videos
     imgs_path = sorted(glob(os.path.join(config.get("source_dir"), "*")))
     for img_path in imgs_path:
@@ -130,14 +134,24 @@ def inference(config: DictConfig):
                 alpha=alpha,
                 theta_ray=theta_ray,
             )
-            # plot 3d bbox
-            plot_3d_box(
-                img=img_draw,
-                cam_to_img=proj_matrix,
-                ry=orient,
-                dimension=dim,
-                center=location,
+            # plot 3d bbox and bev
+            plot3dbev.plot(
+                img = img_draw,
+                class_object=det["label"].split(" ")[0],
+                bbox=box,
+                dim=dim,
+                loc=location,
+                rot_y=orient,
             )
+
+            # plot 3d bbox
+            # plot_3d_box(
+            #     img=img_draw,
+            #     cam_to_img=proj_matrix,
+            #     ry=orient,
+            #     dimension=dim,
+            #     center=location,
+            # )
 
             if config.get("save_txt"):
                 # save txt results
@@ -157,7 +171,8 @@ def inference(config: DictConfig):
 
         # save images
         if config.get("save_result"):
-            cv2.imwrite(f'{config.get("output_dir")}/{name}.png', img_draw)
+            # cv2.imwrite(f'{config.get("output_dir")}/{name}.png', img_draw)
+            plot3dbev.save_plot(config.get("output_dir"), name)
 
         # save txt
         if config.get("save_txt"):
