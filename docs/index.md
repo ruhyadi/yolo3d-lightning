@@ -18,7 +18,7 @@
 ## 📼&nbsp;&nbsp;Demo
 <div align="center">
 
-![demo](./docs/assets/demo.gif)
+![demo](./assets/demo.gif)
 
 </div>
 
