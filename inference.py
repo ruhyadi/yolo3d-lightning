@@ -12,7 +12,7 @@ from pytorch_lightning import LightningModule
 from src.utils import Calib
 from src.utils.ClassAverages import ClassAverages
 from src.utils.Plotting import calc_alpha, plot_3d_box
-from src.utils.Math import calc_location
+from src.utils.Math import calc_location, compute_orientaion, recover_angle, translation_constraints
 from src.utils.Plotting import calc_theta_ray
 from src.utils.Plotting import Plot3DBoxBev
 
@@ -23,7 +23,6 @@ import os
 import sys
 import pyrootutils
 import src.utils
-from src.utils.math2 import compute_orientaion, recover_angle, translation_constraints
 from src.utils.utils import KITTIObject
 
 import time
@@ -198,6 +197,141 @@ def inference(config: DictConfig):
         if key in ["detector", "regressor", "plotting"]:
             avg_time[key] = value / len(imgs_path)
     log.info(f"Average Time: {avg_time}")
+
+@hydra.main(version_base="1.2", config_path=root / "configs", config_name="inference.yaml")
+def inference_old(config: DictConfig):
+
+    # ONNX provider
+    providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] \
+                if config.get("device") == "cuda" else ['CPUExecutionProvider']
+
+    # use global calib file
+    proj_matrix = Calib.get_P(config.get("calib_file"))
+
+    # Averages Dimension list
+    class_averages = ClassAverages()
+
+    # init detector model
+    log.info(f"Instantiating detector <{config.detector._target_}>")
+    detector = hydra.utils.instantiate(config.detector)
+
+    # init regressor model
+    if config.get("inference_type") == "pytorch":
+        log.info(f"Instantiating regressor <{config.model._target_}>")
+        regressor: LightningModule = hydra.utils.instantiate(config.model)
+        regressor.load_state_dict(torch.load(config.get("regressor_weights")))
+        regressor.eval().to(config.get("device"))
+    elif config.get("inference_type") == "onnx":
+        log.info(f"Instantiating ONNX regressor <{config.get('regressor_weights').split('/')[-1]}>")
+        regressor = onnxruntime.InferenceSession(config.get("regressor_weights"), providers=providers)
+        input_name = regressor.get_inputs()[0].name
+    elif config.get("inference_type") == "openvino":
+        log.info(f"Instantiating OpenVINO regressor <{config.get('regressor_weights').split('/')[-1]}>")
+        core = ov.Core()
+        model = core.read_model(config.get("regressor_weights"))
+        regressor = core.compile_model(model, 'CPU') #TODO: change to config.get("device")
+        infer_req = regressor.create_infer_request()
+
+    # init preprocessing
+    log.info(f"Instantiating preprocessing")
+    preprocess: List[torch.nn.Module] = []
+    if "augmentation" in config:
+        for _, conf in config.augmentation.items():
+            if "_target_" in conf:
+                preprocess.append(hydra.utils.instantiate(conf))
+    preprocess = transforms.Compose(preprocess)
+
+    if not os.path.exists(config.get("output_dir")):
+        os.makedirs(config.get("output_dir"))
+
+    # TODO: able inference on videos
+    imgs_path = sorted(glob(os.path.join(config.get("source_dir"), "*")))
+    for img_path in imgs_path:
+        name = img_path.split("/")[-1].split(".")[0]
+        img = Image.open(img_path)
+        img_draw = cv2.cvtColor(np.array(img), cv2.COLOR_BGR2RGB)
+        # detect object with Detector
+        dets = detector(img).crop(save=config.get("save_det2d"))
+        # TODO: remove DIMS
+        DIMS = []
+        # txt results
+        RESULTS_TXT = []
+        for det in dets:
+            # preprocess img with torch.transforms
+            crop = preprocess(cv2.resize(det["im"], (224, 224)))
+            # batching img
+            crop = crop.reshape((1, *crop.shape)).to(config.get("device"))
+            # regress 2D bbox
+            if config.get("inference_type") == "pytorch":
+                [orient, conf, dim] = regressor(crop)
+                orient = orient.cpu().detach().numpy()[0, :, :]
+                conf = conf.cpu().detach().numpy()[0, :]
+                dim = dim.cpu().detach().numpy()[0, :]
+            elif config.get("inference_type") == "onnx":
+                # TODO: inference with GPU
+                [orient, conf, dim] = regressor.run(None, {input_name: crop.cpu().numpy()})
+                orient = orient[0]
+                conf = conf[0]
+                dim = dim[0]
+            elif config.get("inference_type") == "openvino":
+                infer_req.infer(inputs={0: crop.cpu().numpy()})
+                orient = infer_req.get_output_tensor(0).data[0]
+                conf = infer_req.get_output_tensor(1).data[0]
+                dim = infer_req.get_output_tensor(2).data[0]
+
+            # refinement dimension
+            try:
+                dim += class_averages.get_item(class_to_labels(det["cls"].cpu().numpy()))
+                DIMS.append(dim)
+            except:
+                dim = DIMS[-1]
+            # calculate orientation
+            box = [box.cpu().numpy() for box in det["box"]]  # xyxy
+            theta_ray = calc_theta_ray(img.size[0], box, proj_matrix)
+            alpha = calc_alpha(orient=orient, conf=conf, bins=2)
+            orient = alpha + theta_ray
+            # calculate the location
+            location, x = calc_location(
+                dimension=dim,
+                proj_matrix=proj_matrix,
+                box_2d=box,
+                alpha=alpha,
+                theta_ray=theta_ray,
+            )
+            # plot 3d bbox
+            plot_3d_box(
+                img=img_draw,
+                cam_to_img=proj_matrix,
+                ry=orient,
+                dimension=dim,
+                center=location,
+            )
+
+            if config.get("save_txt"):
+                # save txt results
+                results_txt = {
+                    "type": det["label"].split(" ")[0].capitalize(),
+                    "truncated": "-1.00", # set default to -1.00
+                    "occluded": -1,
+                    "alpha": round(alpha, 2),
+                    "bbox": " ".join(str(np.round(x, 2)) for x in box),
+                    "dimension": " ".join(map(str, np.round(dim, 2))),
+                    "location": " ".join(str(np.round(x, 2)) for x in location),
+                    "rotation_y": round(orient, 2),
+                    "score": str(np.round(det["conf"].cpu().numpy(), 2)),
+                }
+                # append as string
+                RESULTS_TXT.append(" ".join(str(v) for k, v in results_txt.items()))
+
+        # save images
+        if config.get("save_result"):
+            cv2.imwrite(f'{config.get("output_dir")}/{name}.png', img_draw)
+
+        # save txt
+        if config.get("save_txt"):
+            with open(f'{config.get("output_dir")}/{name}.txt', "w") as f:
+                for i in range(len(RESULTS_TXT)):
+                    f.write(f"{RESULTS_TXT[i]}\n")
 
 def detector_yolov5(model_path: str, cfg_path: str, classes: int, device: str):
     """YOLOv5 detector model"""

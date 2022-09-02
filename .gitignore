@@ -167,4 +167,4 @@ wandb/
 *.xml
 src/models/components/utils.py
 src/utils/plotting_dummy.py
-3Dbbox
+/3dbbox
