@@ -4,6 +4,7 @@ import time
 # import numba
 import numpy as np
 from scipy.interpolate import interp1d
+from tqdm import tqdm
 
 from src.utils.rotate_iou import rotate_iou_gpu_eval
 
@@ -774,7 +775,7 @@ def get_official_eval_result(gt_annos,
     for j, curcls in enumerate(current_classes):
         # mAP threshold array: [num_minoverlap, metric, class]
         # mAP result: [num_class, num_diff, num_minoverlap]
-        for i in range(min_overlaps.shape[0]):
+        for i in tqdm(range(min_overlaps.shape[0])):
             mAPbbox = get_mAP_v2(metrics["bbox"]["precision"][j, :, i])
             mAPbbox = ", ".join(f"{v:.2f}" for v in mAPbbox)
             mAPbev = get_mAP_v2(metrics["bev"]["precision"][j, :, i])

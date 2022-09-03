@@ -1,8 +1,6 @@
-""" Inference Code """
+""" Evaluating Code """
 
-from asyncore import read
 from typing import List
-from PIL import Image
 import cv2
 from glob import glob
 import numpy as np
@@ -12,10 +10,11 @@ from torchvision.transforms import transforms
 from pytorch_lightning import LightningModule
 from src.utils import Calib
 from src.utils.ClassAverages import ClassAverages
-from src.utils.Plotting import calc_alpha, plot_3d_box
-from src.utils.Math import calc_location, compute_orientaion, recover_angle, translation_constraints
-from src.utils.Plotting import calc_theta_ray
-from src.utils.Plotting import Plot3DBoxBev
+from src.utils.Math import (
+    compute_orientaion,
+    recover_angle,
+    translation_constraints,
+)
 
 import dotenv
 import hydra
@@ -25,7 +24,6 @@ import sys
 import pyrootutils
 import src.utils
 from src.utils.utils import KITTIObject
-import time
 from tqdm import tqdm
 
 import src.utils.kitti_common as kitti
@@ -36,6 +34,7 @@ log = src.utils.get_pylogger(__name__)
 dotenv.load_dotenv(override=True)
 
 root = pyrootutils.setup_root(__file__, dotenv=True, pythonpath=True)
+
 
 @hydra.main(version_base="1.2", config_path=root / "configs", config_name="evaluate.yaml")
 def evaluate(config: DictConfig):
@@ -65,7 +64,7 @@ def evaluate(config: DictConfig):
 
     # Create output directory
     os.makedirs(config.get("pred_dir"), exist_ok=True)
-    
+
     # evalaution on validation sets
     imgs_path = images_sets(config.get("val_images_path"), config.get("val_sets"))
     for img_path in tqdm(imgs_path):
@@ -102,7 +101,7 @@ def evaluate(config: DictConfig):
                 DIMENSION.append(dim)
             except:
                 dim = DIMENSION[-1]
-            
+
             obj.alpha = recover_angle(orient, conf, 2)
             obj.h, obj.w, obj.l = dim[0], dim[1], dim[2]
             obj.rot_global, rot_local = compute_orientaion(P2, obj)
@@ -119,10 +118,11 @@ def evaluate(config: DictConfig):
 
     # evaluate results
     log.info(f"Evaluating results")
-    results = get_evaluation(config.get("pred_dir"), config.get("gt_dir"), config.get("val_sets"))
+    results = get_evaluation(config.get("pred_dir"), config.get("gt_dir"))
     log.info(f"Results: {results}")
 
     return results
+
 
 def detector_yolov5(model_path: str, cfg_path: str, classes: int, device: str):
     """YOLOv5 detector model"""
@@ -158,32 +158,45 @@ def class_to_labels(class_: int, list_labels: List = None):
 
     return list_labels[int(class_)]
 
-def get_evaluation(pred_path: str, gt_path: str, val_sets: str):
-    """Evaluate results"""    
-    val_ids = read_sets(val_sets)
-    pred_annos = kitti.get_label_annos(pred_path)
+
+def get_evaluation(pred_path: str, gt_path: str):
+    """Evaluate results"""
+    val_ids = [
+        int(res.split("/")[-1].split(".")[0])
+        for res in sorted(glob(os.path.join(pred_path, "*.txt")))
+    ]
+    pred_annos = kitti.get_label_annos(pred_path, val_ids)
     gt_annos = kitti.get_label_annos(gt_path, val_ids)
 
     # compute mAP
     results = get_official_eval_result(
-        gt_annos=gt_annos, 
-        dt_annos=pred_annos,
-        current_classes=0
+        gt_annos=gt_annos, dt_annos=pred_annos, current_classes=0
     )
 
     return results
 
+
 def read_sets(path: str):
     """Read validation sets"""
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         lines = f.readlines()
     return [int(line) for line in lines]
+
+
+def generate_sets(path: str):
+    """Generate validation sets from images path"""
+    pred_results = [res.split("/")[-1].split(".")[0] for res in glob(path, "*.txt")]
+
 
 def images_sets(imgs_path: str, sets_path: str):
     """Read images sets"""
     imgs_path = sorted(glob(os.path.join(imgs_path, "*")))
     val_sets = read_sets(sets_path)
-    return [img_path for img_path in imgs_path if int(img_path.split("/")[-1].split(".")[0]) in val_sets]
+    return [
+        img_path
+        for img_path in imgs_path
+        if int(img_path.split("/")[-1].split(".")[0]) in val_sets
+    ]
 
 
 if __name__ == "__main__":

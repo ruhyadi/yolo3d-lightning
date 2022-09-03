@@ -33,7 +33,7 @@ regressor_weights: ${root}/weights/regressor_resnet18.pt
 val_images_path: ${root}/data/KITTI/images
 
 # validation sets directory
-val_sets: ${root}/data/KITTI/val_dummy.txt
+val_sets: ${root}/data/KITTI/val_95.txt
 
 # gt/label path
 gt_dir: ${root}/data/KITTI/label_2
