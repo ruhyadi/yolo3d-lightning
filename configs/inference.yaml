@@ -28,7 +28,7 @@ calib_file: ${root}/data/global_calib.txt
 save_det2d: False
 
 # show and save result
-save_result: True
+save_result: False
 
 # save result in txt
 save_txt: True
@@ -41,7 +41,8 @@ inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
 
 # source directory
 # source_dir: ${root}/data/demo/images
-source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
+# source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
+source_dir: ${root}/data/KITTI/eval_yolo3d
 
 # device to inference
 device: 'cuda:0'
