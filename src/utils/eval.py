@@ -5,7 +5,8 @@ import time
 import numpy as np
 from scipy.interpolate import interp1d
 
-from rotate_iou import rotate_iou_gpu_eval
+from src.utils.rotate_iou import rotate_iou_gpu_eval
+
 
 def get_mAP(prec):
     sums = 0

@@ -312,7 +312,7 @@ class KITTIObject():
     utils for YOLO3D
     detectionInfo is a class that contains information about the detection
     """
-    def __init__(self, line = np.zeros(15)):
+    def __init__(self, line = np.zeros(16)):
         self.name = line[0]
 
         self.truncation = float(line[1])
@@ -339,6 +339,9 @@ class KITTIObject():
 
         # global orientation [-pi, pi]
         self.rot_global = float(line[14])
+
+        # score
+        self.score = float(line[15])
 
     def member_to_list(self):
         output_line = []
