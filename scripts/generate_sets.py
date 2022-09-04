@@ -37,8 +37,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create training and validation sets")
     parser.add_argument("--images_path", type=str, default="./data/KITTI/images")
     parser.add_argument("--dump_dir", type=str, default="./data/KITTI")
-    parser.add_argument("--postfix", type=str, default="_yolo")
-    parser.add_argument("--train_size", type=float, default=0.8)
+    parser.add_argument("--postfix", type=str, default="_95")
+    parser.add_argument("--train_size", type=float, default=0.95)
     parser.add_argument("--is_yolo", action="store_true")
     args = parser.parse_args()
 
@@ -47,5 +47,5 @@ if __name__ == "__main__":
         dump_dir=args.dump_dir,
         postfix=args.postfix,
         train_size=args.train_size,
-        is_yolo=True,
+        is_yolo=False,
     )

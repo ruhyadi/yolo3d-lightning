@@ -3,5 +3,6 @@ _target_: src.datamodules.kitti_datamodule.KITTIDataModule
 dataset_path: ${paths.data_dir} # data_dir is specified in config.yaml
 train_sets: ${paths.data_dir}/train.txt
 val_sets: ${paths.data_dir}/val.txt
+test_sets: ${paths.data_dir}/test.txt
 batch_size: 128
 num_worker: 32

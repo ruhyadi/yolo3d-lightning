@@ -109,6 +109,13 @@ class RegressorModel(LightningModule):
         self.log("val/avg_loss", avg_val_loss)
         return {"loss": avg_val_loss}
 
+    def test_step(self, batch, batch_idx):
+        loss, [orient, conf, dim], targets = self.step(batch)
+        
+
+
+        
+
     def on_epoch_end(self):
         # reset metrics at the end of every epoch
         pass

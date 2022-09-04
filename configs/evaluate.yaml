@@ -15,34 +15,28 @@ defaults:
   - override hydra/job_logging: colorlog
 
 # run name
-name: inference
+name: evaluate
 
 # directory
 root: ${hydra:runtime.cwd}
-output_dir: ${root}/${hydra:run.dir}/inference
+
+# predictions/output directory
+pred_dir: ${root}/${hydra:run.dir}/${name}
 
 # calib_file
 calib_file: ${root}/data/global_calib.txt
 
-# save 2D bounding box
-save_det2d: False
-
-# show and save result
-save_result: False
-
-# save result in txt
-save_txt: True
-
 # regressor weights
 regressor_weights: ${root}/weights/regressor_resnet18.pt
 
-# inference type
-inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
+# validation images directory
+val_images_path: ${root}/data/KITTI/images
 
-# source directory
-# source_dir: ${root}/data/demo/images
-# source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
-source_dir: ${root}/data/KITTI/eval_yolo3d
+# validation sets directory
+val_sets: ${root}/data/KITTI/val_80.txt
+
+# gt/label path
+gt_dir: ${root}/data/KITTI/label_2
 
 # device to inference
 device: 'cuda:0'
