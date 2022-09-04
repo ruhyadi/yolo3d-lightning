@@ -67,6 +67,6 @@ if __name__ == '__main__':
     dataset.setup()
     train = dataset.train_dataloader()
 
-    for i in train:
-        print(i)
+    for img, label in train:
+        print(label)
         break
