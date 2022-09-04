@@ -2,19 +2,18 @@
 Dataset modules for load kitti dataset and convert to yolo3d format
 """
 
-import csv
-from pathlib import Path
-import os
-from typing import List
 import copy
+import csv
+import os
+from pathlib import Path
+from typing import List
 
-import numpy as np
 import cv2
-from torch.utils.data import Dataset
-from torchvision.transforms import transforms
-
+import numpy as np
 from src.utils import Calib as calib
 from src.utils.ClassAverages import ClassAverages
+from torch.utils.data import Dataset
+from torchvision.transforms import transforms
 
 
 class KITTIDataset(Dataset):
@@ -316,28 +315,11 @@ class KITTILoader(Dataset):
             image_full_path = os.path.join(image_dir, fn.replace(".txt", ".png"))
 
             self.images.append(image_full_path)
-            fieldnames = [
-                "type",
-                "truncated",
-                "occluded",
-                "alpha",
-                "xmin",
-                "ymin",
-                "xmax",
-                "ymax",
-                "dh",
-                "dw",
-                "dl",
-                "lx",
-                "ly",
-                "lz",
-                "ry",
-            ]
+            fieldnames = ["type", "truncated", "occluded", "alpha", "xmin", "ymin", 
+                        "xmax", "ymax", "dh", "dw", "dl", "lx", "ly", "lz", "ry"]
             with open(label_full_path, "r") as csv_file:
                 reader = csv.DictReader(csv_file, delimiter=" ", fieldnames=fieldnames)
-
                 for line, row in enumerate(reader):
-
                     if row["type"] in self.KITTI_cat:
                         # if subset == 'training':
                         new_alpha = self.get_new_alpha(row["alpha"])
@@ -370,8 +352,10 @@ class KITTILoader(Dataset):
         return len(self.image_data)
 
     def __getitem__(self, index):
+        """Iterate items"""
+        data = self.orientation_confidence_flip(self.image_data[index])
 
-        return super().__getitem__(index)
+        return []
 
     def get_average_dimension(self):
         dims_avg = {key: np.array([0, 0, 0]) for key in self.KITTI_cat}
@@ -591,7 +575,6 @@ if __name__ == "__main__":
     # KITTI DATASET LOADER
     # dataset = KITTIDataset()
     # train_loader = DataLoader(dataset, 1)
-
     # for img, label in train_loader:
     #     print(img.shape)
     #     break
