@@ -27,7 +27,7 @@ pred_dir: ${root}/${hydra:run.dir}/${name}
 calib_file: ${root}/data/global_calib.txt
 
 # regressor weights
-regressor_weights: ${root}/weights/regressor_resnet18.pt
+regressor_weights: ${root}/weights/resnet18_reg_new.pt
 
 # validation images directory
 val_images_path: ${root}/data/KITTI/images

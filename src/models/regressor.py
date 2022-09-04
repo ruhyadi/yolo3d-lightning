@@ -20,7 +20,7 @@ class RegressorModel(LightningModule):
         super().__init__()
 
         # save hyperparamters
-        self.save_hyperparameters(logger=False, ignore=["net"])
+        self.save_hyperparameters(logger=False)
 
         # init model
         self.net = net
@@ -108,13 +108,6 @@ class RegressorModel(LightningModule):
         # log to tensorboard
         self.log("val/avg_loss", avg_val_loss)
         return {"loss": avg_val_loss}
-
-    def test_step(self, batch, batch_idx):
-        loss, [orient, conf, dim], targets = self.step(batch)
-        
-
-
-        
 
     def on_epoch_end(self):
         # reset metrics at the end of every epoch

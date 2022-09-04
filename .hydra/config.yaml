@@ -10,6 +10,7 @@ datamodule:
   dataset_path: ${paths.data_dir}
   train_sets: ${paths.data_dir}/train_80.txt
   val_sets: ${paths.data_dir}/val_80.txt
+  test_sets: ${paths.data_dir}/test.txt
   batch_size: 128
   num_worker: 32
 model:
@@ -57,11 +58,24 @@ callbacks:
     max_depth: -1
   rich_progress_bar:
     _target_: pytorch_lightning.callbacks.RichProgressBar
+logger:
+  wandb:
+    _target_: pytorch_lightning.loggers.wandb.WandbLogger
+    save_dir: ${paths.output_dir}
+    offline: false
+    id: null
+    anonymous: null
+    project: yolo3d-regressor
+    log_model: false
+    prefix: ''
+    group: ''
+    tags: []
+    job_type: ''
 trainer:
   _target_: pytorch_lightning.Trainer
   default_root_dir: ${paths.output_dir}
   min_epochs: 1
-  max_epochs: 2
+  max_epochs: 20
   accelerator: gpu
   devices:
   - 1
@@ -72,8 +86,6 @@ trainer:
   strategy: ddp
   num_nodes: 1
   sync_batchnorm: true
-  limit_train_batches: 0.2
-  limit_val_batches: 0.2
   gpus:
   - 0
   - 1
@@ -89,4 +101,4 @@ extras:
   ignore_warnings: false
   enforce_tags: true
   print_config: true
-name: sample_train
+name: new_network

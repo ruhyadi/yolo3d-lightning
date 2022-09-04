@@ -168,7 +168,7 @@ hydra:
       extras: default.yaml
       paths: default.yaml
       trainer: dgx.yaml
-      logger: null
+      logger: wandb.yaml
       callbacks: default.yaml
       model: regressor.yaml
       datamodule: kitti_datamodule.yaml

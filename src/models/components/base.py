@@ -22,34 +22,28 @@ class RegressorNet(nn.Module):
         # orientation head, for orientation estimation
         self.orientation = nn.Sequential(
             nn.Linear(self.in_features, 256),
-            nn.ReLU(True),
+            nn.LeakyReLU(0.1),
             nn.Dropout(),
-            nn.Linear(256, 256),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(256, self.bins*2) # 4 bins
+            nn.Linear(256, self.bins*2), # 4 bins
+            nn.LeakyReLU(0.1)
         )
 
         # confident head, for orientation estimation
         self.confidence = nn.Sequential(
             nn.Linear(self.in_features, 256),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(256, 256),
-            nn.ReLU(True),
+            nn.LeakyReLU(0.1),
             nn.Dropout(),
             nn.Linear(256, self.bins),
+            nn.LeakyReLU(0.1)
         )
 
         # dimension head
         self.dimension = nn.Sequential(
             nn.Linear(self.in_features, 512),
-            nn.ReLU(True),
+            nn.LeakyReLU(0.1),
             nn.Dropout(),
-            nn.Linear(512, 512),
-            nn.ReLU(True),
-            nn.Dropout(),
-            nn.Linear(512, 3) # x, y, z
+            nn.Linear(512, 3), # x, y, z
+            nn.LeakyReLU(0.1)
         )
 
     def forward(self, x):
@@ -124,8 +118,10 @@ def get_model(backbone: str):
 if __name__ == '__main__':
     
     from torchvision.models import resnet18
+    from torchsummary import summary
 
     backbone = resnet18(pretrained=False)
     model = RegressorNet(backbone, 2)
 
-    print(model)
+    input_size = (3, 224, 224)
+    summary(model, input_size, device='cpu')

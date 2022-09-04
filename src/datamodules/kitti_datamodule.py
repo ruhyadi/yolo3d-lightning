@@ -34,7 +34,7 @@ class KITTIDataModule(LightningDataModule):
         """ Split dataset to training and validation """
         self.KITTI_train = KITTIDataset(self.hparams.dataset_path, self.hparams.train_sets)
         self.KITTI_val = KITTIDataset(self.hparams.dataset_path, self.hparams.val_sets)
-        self.KITTI_test = KITTIDataset(self.hparams.dataset_path, self.hparams.test_sets)
+        # self.KITTI_test = KITTIDataset(self.hparams.dataset_path, self.hparams.test_sets)
         # TODO: add test datasets dan test sets
 
     def train_dataloader(self):
@@ -53,13 +53,13 @@ class KITTIDataModule(LightningDataModule):
             shuffle=False
         )
 
-    def test_dataloader(self):
-        return DataLoader(
-            dataset=self.KITTI_test,
-            batch_size=self.hparams.batch_size,
-            num_workers=self.hparams.num_worker,
-            shuffle=False
-        )
+    # def test_dataloader(self):
+    #     return DataLoader(
+    #         dataset=self.KITTI_test,
+    #         batch_size=self.hparams.batch_size,
+    #         num_workers=self.hparams.num_worker,
+    #         shuffle=False
+    #     )
 
 if __name__ == '__main__':
 

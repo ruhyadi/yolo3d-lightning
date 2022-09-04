@@ -7,7 +7,7 @@ defaults:
   - override /datamodule: kitti_datamodule.yaml
   - override /model: regressor.yaml
   - override /callbacks: default.yaml
-  - override /logger: null
+  - override /logger: wandb.yaml
   - override /trainer: dgx.yaml
 
 # all parameters below will be merged with parameters from default configurations set above
@@ -17,9 +17,9 @@ seed: 420
 
 trainer:
   min_epochs: 1
-  max_epochs: 2
-  limit_train_batches: 0.2
-  limit_val_batches: 0.2
+  max_epochs: 20
+  # limit_train_batches: 1.0
+  # limit_val_batches: 1.0
   gpus: [0,1,2,3]
   strategy: ddp
 
@@ -28,4 +28,4 @@ datamodule:
   val_sets: ${paths.data_dir}/val_80.txt
 
 # name of the run determines folder name in logs
-name: "sample_train"
+name: "new_network"
