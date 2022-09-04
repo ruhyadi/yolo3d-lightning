@@ -200,5 +200,5 @@ def images_sets(imgs_path: str, sets_path: str):
 
 
 if __name__ == "__main__":
-
+    
     evaluate()
