@@ -283,7 +283,7 @@ KITTI DataLoader
 Source: https://github.com/lzccccc/3d-bounding-box-estimation-for-autonomous-driving
 """
 
-class KITTIDataLoader(Dataset):
+class KITTIDataset2(Dataset):
     """KITTI Data Loader"""
 
     def __init__(
@@ -536,7 +536,7 @@ if __name__ == "__main__":
     # {'Class': ['Pedestrian'], 'Box_2D': [[tensor([712]), tensor([143])], [tensor([811]), tensor([308])]], 'Dimensions': tensor([[ 0.1223, -0.1478,  0.3820]], dtype=torch.float64), 'Alpha': tensor([-0.2000], dtype=torch.float64), 'Orientation': tensor([[[0.1987, 0.9801],
     #         [0.0000, 0.0000]]], dtype=torch.float64), 'Confidence': tensor([[1., 0.]], dtype=torch.float64)}
 
-    dataset = KITTIDataLoader(
+    dataset = KITTIDataset2(
         dataset_dir="./data/KITTI",
         dataset_sets_path="./data/KITTI/train_80.txt",
         bin=2,

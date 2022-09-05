@@ -1,4 +1,4 @@
-_target_: src.datamodules.components.kitti_dataset.KITTIDataLoader
+_target_: src.datamodules.components.kitti_dataset.KITTIDataset2
 
 dataset_path: ${paths.data_dir}
 dataset_sets_path: ${paths.data_dir}/train_80.txt
