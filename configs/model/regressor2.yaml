@@ -1,0 +1,13 @@
+_target_: src.models.regressor.RegressorModel2
+
+net:
+  _target_: src.models.components.base.RegressorNet
+  backbone:
+    _target_: torchvision.models.resnet18 # change model on this
+    pretrained: True
+  bins: 2
+
+lr: 0.0001
+momentum: 0.9
+w: 0.4
+alpha: 0.6

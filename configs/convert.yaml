@@ -3,7 +3,7 @@
 # specify here default training configuration
 defaults:
   - _self_
-  - model: regressor.yaml
+  - model: regressor2.yaml
 
   # enable color logging
   - override hydra/hydra_logging: colorlog
@@ -19,7 +19,7 @@ ignore_warnings: True
 root: ${hydra:runtime.cwd}
 
 # checkpoint directory
-checkpoint_dir: ${root}/logs/train/runs/2022-09-04_12-11-47/checkpoints/epoch_013.ckpt
+checkpoint_dir: ${root}/logs/train/runs/2022-09-05_11-20-30/checkpoints/epoch_017.ckpt
 
 # dump dir
 dump_dir: ${root}/weights

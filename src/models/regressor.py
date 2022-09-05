@@ -142,7 +142,7 @@ class RegressorModel2(LightningModule):
         # loss functions
         self.conf_loss_func = nn.CrossEntropyLoss()
         self.dim_loss_func = nn.MSELoss()
-        self.orient_loss_func = orientation_loss2()
+        self.orient_loss_func = orientation_loss2
 
     def forward(self, x):
         return self.net(x)
@@ -233,9 +233,9 @@ class RegressorModel2(LightningModule):
         optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams.lr,
             momentum=self.hparams.momentum
         )
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=2)
+        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=2)
 
-        return optimizer, [scheduler]
+        return optimizer
 
 if __name__ == "__main__":
 

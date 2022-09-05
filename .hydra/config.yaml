@@ -4,24 +4,24 @@ tags:
 train: true
 test: false
 ckpt_path: null
-seed: 420
+seed: null
 datamodule:
-  _target_: src.datamodules.kitti_datamodule.KITTIDataModule
+  _target_: src.datamodules.kitti_datamodule.KITTIDataModule2
   dataset_path: ${paths.data_dir}
   train_sets: ${paths.data_dir}/train_80.txt
   val_sets: ${paths.data_dir}/val_80.txt
-  test_sets: ${paths.data_dir}/test.txt
+  test_sets: ${paths.data_dir}/test_80.txt
   batch_size: 128
   num_worker: 32
 model:
-  _target_: src.models.regressor.RegressorModel
+  _target_: src.models.regressor.RegressorModel2
   net:
     _target_: src.models.components.base.RegressorNet
     backbone:
       _target_: torchvision.models.resnet18
       pretrained: true
     bins: 2
-  lr: 0.001
+  lr: 0.0001
   momentum: 0.9
   w: 0.4
   alpha: 0.6
@@ -58,39 +58,21 @@ callbacks:
     max_depth: -1
   rich_progress_bar:
     _target_: pytorch_lightning.callbacks.RichProgressBar
-logger:
-  wandb:
-    _target_: pytorch_lightning.loggers.wandb.WandbLogger
-    save_dir: ${paths.output_dir}
-    offline: false
-    id: null
-    anonymous: null
-    project: yolo3d-regressor
-    log_model: false
-    prefix: ''
-    group: ''
-    tags: []
-    job_type: ''
 trainer:
   _target_: pytorch_lightning.Trainer
   default_root_dir: ${paths.output_dir}
   min_epochs: 1
-  max_epochs: 20
+  max_epochs: 10
   accelerator: gpu
   devices:
-  - 1
-  - 2
-  - 3
-  - 4
-  deterministic: false
-  strategy: ddp
-  num_nodes: 1
-  sync_batchnorm: true
-  gpus:
   - 0
   - 1
   - 2
   - 3
+  deterministic: false
+  strategy: ddp
+  num_nodes: 1
+  sync_batchnorm: true
 paths:
   root_dir: ${oc.env:PROJECT_ROOT}
   data_dir: ${paths.root_dir}/data/KITTI
@@ -101,4 +83,3 @@ extras:
   ignore_warnings: false
   enforce_tags: true
   print_config: true
-name: new_network
