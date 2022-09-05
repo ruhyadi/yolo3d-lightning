@@ -4,7 +4,7 @@
 defaults:
   - _self_
   - detector: yolov5.yaml
-  - model: regressor.yaml
+  - model: regressor2.yaml
   - augmentation: inference_preprocessing.yaml
 
   # debugging config (enable through command line, e.g. `python train.py debug=default)
@@ -28,21 +28,21 @@ calib_file: ${root}/data/global_calib.txt
 save_det2d: False
 
 # show and save result
-save_result: False
+save_result: True
 
 # save result in txt
-save_txt: True
+# save_txt: True
 
 # regressor weights
-regressor_weights: ${root}/weights/regressor_resnet18.pt
+# regressor_weights: ${root}/weights/regressor_resnet18.pt
+regressor_weights: ${root}/weights/regressor_resnet18_new3.pt
 
 # inference type
 inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
 
 # source directory
 # source_dir: ${root}/data/demo/images
-# source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
-source_dir: ${root}/data/KITTI/eval_yolo3d
+source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
 
 # device to inference
 device: 'cuda:0'

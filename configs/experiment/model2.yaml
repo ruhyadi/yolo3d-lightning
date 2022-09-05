@@ -4,8 +4,8 @@
 # python train.py experiment=example
 
 defaults:
-  - override /datamodule: kitti_datamodule.yaml
-  - override /model: regressor.yaml
+  - override /datamodule: kitti_datamodule2.yaml
+  - override /model: regressor2.yaml
   - override /callbacks: default.yaml
   - override /logger: wandb.yaml
   - override /trainer: dgx.yaml
@@ -17,9 +17,7 @@ seed: 420
 
 trainer:
   min_epochs: 1
-  max_epochs: 20
-  # limit_train_batches: 1.0
-  # limit_val_batches: 1.0
+  max_epochs: 10
   gpus: [0,1,2,3]
   strategy: ddp
 
@@ -28,4 +26,4 @@ datamodule:
   val_sets: ${paths.data_dir}/val_80.txt
 
 # name of the run determines folder name in logs
-name: "new_network"
+name: "new_network_&_dataset"

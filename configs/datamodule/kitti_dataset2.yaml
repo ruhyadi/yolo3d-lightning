@@ -1,0 +1,13 @@
+_target_: src.datamodules.components.kitti_dataset.KITTIDataset2
+
+dataset_path: ${paths.data_dir}
+dataset_sets_path: ${paths.data_dir}/train_80.txt
+bin: 2
+overlap: 0.1
+image_size: 224
+categories: 
+  - "Car"
+  - "Pedestrian"
+  - "Cyclist"
+  - "Van"
+  - "Truck"
