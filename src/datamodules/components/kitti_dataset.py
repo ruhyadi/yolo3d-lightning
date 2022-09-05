@@ -493,29 +493,30 @@ class KITTIDataLoader(Dataset):
         crop_img = img[ymin : ymax + 1, xmin : xmax + 1]
         crop_img = cv2.resize(crop_img, (self.image_size, self.image_size))
 
+        # NOTE: Disable Augmentation
         # augmented image with flip
-        flip = np.random.binomial(1, 0.5)
-        if flip > 0.5:
-            crop_img = cv2.flip(crop_img, 1)
+        # flip = np.random.random(1, 0.5)
+        # if flip > 0.5:
+        #     crop_img = cv2.flip(crop_img, 1)
         # transforms image
         crop_img = preprocess(crop_img)
 
-        if flip > 0.5:
-            return (
-                crop_img,
-                {"orientation": data["orient_flipped"],
-                 "confidence": data["conf_flipped"],
-                 "dimensions": data["dims"],
-                },
-            )
-        else:
-            return (
-                crop_img,
-                {"orientation": data["orient_flipped"],
-                 "confidence": data["conf_flipped"],
-                 "dimensions": data["dims"],
-                },
-            )
+        # if flip > 0.5:
+        #     return (
+        #         crop_img,
+        #         {"orientation": data["orient_flipped"],
+        #          "confidence": data["conf_flipped"],
+        #          "dimensions": data["dims"],
+        #         },
+        #     )
+        # else:
+        return (
+            crop_img,
+            {"orientation": data["orient"],
+                "confidence": data["conf"],
+                "dimensions": data["dims"],
+            },
+        )
 
 
 if __name__ == "__main__":
@@ -541,18 +542,18 @@ if __name__ == "__main__":
         bin=2,
     )
 
-    dataloader = DataLoader(
-        dataset, batch_size=1, shuffle=True, num_workers=1, pin_memory=True
-    )
-    print(len(dataset))
-    print(len(dataloader))
+    # dataloader = DataLoader(
+    #     dataset, batch_size=1, shuffle=True, num_workers=1, pin_memory=True
+    # )
+    # print(len(dataset))
+    # print(len(dataloader))
 
-    for i, (x, y) in enumerate(dataloader):
-        print(x.shape)
-        print("Orientation: ", y["orientation"])
-        print("Confidence: ", y["confidence"])
-        print("Dimensions: ", y["dimensions"])
-        break
+    # for i, (x, y) in enumerate(dataloader):
+    #     print(x.shape)
+    #     print("Orientation: ", y["orientation"])
+    #     print("Confidence: ", y["confidence"])
+    #     print("Dimensions: ", y["dimensions"])
+    #     break
 
     # output
     # torch.Size([1, 3, 224, 224])
@@ -561,3 +562,17 @@ if __name__ == "__main__":
     # Confidence:  tensor([[0., 1.]], dtype=torch.float64)
     # Dimensions:  tensor([[-7.2352, -2.6087, -7.1447]], dtype=torch.float64)
 
+    # test new alpha
+    angle = np.pi/2
+    bin = 2
+    anchors = dataset.compute_anchors(angle)
+    orientation = np.zeros((bin, 2))
+    confidence = np.zeros(bin)
+    for anchor in anchors:
+        # each angle is represented in sin and cos
+        orientation[anchor[0]] = np.array([np.cos(anchor[1]), np.sin(anchor[1])])
+        confidence[anchor[0]] = 1
+
+    confidence = confidence / np.sum(confidence)
+    orientation = np.expand_dims(orientation, axis=0)
+    print(anchors)

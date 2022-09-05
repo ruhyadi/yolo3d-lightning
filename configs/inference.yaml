@@ -35,15 +35,14 @@ save_result: True
 
 # regressor weights
 # regressor_weights: ${root}/weights/regressor_resnet18.pt
-regressor_weights: ${root}/weights/resnet18_reg_new.pt
+regressor_weights: ${root}/weights/regressor_resnet18_new3.pt
 
 # inference type
 inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
 
 # source directory
 # source_dir: ${root}/data/demo/images
-# source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
-source_dir: ${root}/data/demo/images
+source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
 
 # device to inference
 device: 'cuda:0'

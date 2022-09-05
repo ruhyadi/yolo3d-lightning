@@ -4,7 +4,7 @@
 defaults:
   - _self_
   - detector: yolov5.yaml
-  - model: regressor.yaml
+  - model: regressor2.yaml
   - augmentation: inference_preprocessing.yaml
 
   # debugging config (enable through command line, e.g. `python train.py debug=default)
@@ -27,7 +27,7 @@ pred_dir: ${root}/${hydra:run.dir}/${name}
 calib_file: ${root}/data/global_calib.txt
 
 # regressor weights
-regressor_weights: ${root}/weights/resnet18_reg_new.pt
+regressor_weights: ${root}/weights/regressor_resnet18_new.pt
 
 # validation images directory
 val_images_path: ${root}/data/KITTI/images
