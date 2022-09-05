@@ -10,7 +10,7 @@ import torch
 from torchvision.transforms import transforms
 from pytorch_lightning import LightningModule
 from src.utils import Calib
-from src.utils.ClassAverages import ClassAverages
+from src.utils.averages import ClassAverages
 from src.utils.Plotting import calc_alpha, plot_3d_box
 from src.utils.Math import calc_location, compute_orientaion, recover_angle, translation_constraints
 from src.utils.Plotting import calc_theta_ray

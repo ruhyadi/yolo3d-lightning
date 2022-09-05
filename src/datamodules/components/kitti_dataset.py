@@ -10,9 +10,183 @@ from typing import List
 import cv2
 import numpy as np
 from src.utils import Calib as calib
-from src.utils.ClassAverages import ClassAverages
+from src.utils.averages import ClassAverages, DimensionAverages
 from torch.utils.data import Dataset
 from torchvision.transforms import transforms
+
+class KITTIDataset3(Dataset):
+    """KITTI dataset loader"""
+    def __init__(
+        self,
+        dataset_dir: str = "./data/KITTI",
+        dataset_sets: str = "./data/KITTI/train.txt", # or val.txt
+        bins: int = 2,
+        overlap: float = 0.1,
+        image_size: int = 224,
+        categories: List[str] = ["car", "pedestrian", "cyclist"],
+    ):
+        super().__init__()
+        self.dataset_dir = Path(dataset_dir)
+        with open(dataset_sets, "r") as f:
+            self.ids = [id.split("\n")[0] for id in f.readlines()]
+        self.bins = bins
+        self.overlap = overlap
+        self.image_size = image_size
+        self.categories = categories
+
+        self.images_dir = self.dataset_dir / "images" # image_2
+        self.labels_dir = self.dataset_dir / "label_2"
+        self.P2 = calib.get_P(self.dataset_dir / "calib_kitti.txt") # calibration matrix P2
+
+        # get images and labels paths
+        self.images_path = [self.images_dir / (id + ".png") for id in self.ids]
+        self.labels_path = [self.labels_dir / (id + ".txt") for id in self.ids]
+
+        # get dimension average for every object in categories
+        self.dimensions_averages = DimensionAverages(self.categories)
+        self.dimensions_averages.add_items(self.labels_path)
+
+        # KITTI fieldnames
+        self.fieldnames = [
+            "type", "truncated", "occluded", "alpha",
+            "xmin", "ymin", "xmax", "ymax", "dh", "dw", "dl",
+            "lx", "ly", "lz", "ry"
+            ]
+
+        # get images data
+        self.images_data = self.preprocess_labels(self.labels_path)
+
+    def __len__(self):
+        return len(self.images_data)
+
+    def __getitem__(self, idx):
+
+        image_data = self.images_data[idx]
+
+        orientation = image_data["orientation"]
+        confidence = image_data["confidence"]
+        dimensions = image_data["dimensions"]
+        
+        return [orientation, confidence, dimensions]
+
+    def preprocess_labels(self, labels_path: str):
+        """
+        > Preprocessing labels for yolo3d format.
+        The function takes in a list of paths to the labels, 
+        and returns a list of dictionaries, where
+        each dictionary contains the information for one image
+        Args:
+          labels_path (str): The path to the labels file.
+        Returns:
+          A list of dictionaries, each dictionary contains the information of one object in one image.
+        """
+        IMAGES_DATA = []
+        # generate angle bins, center of each bin [pi/2, 3pi/2] for 2 bin
+        center_bins = self.generate_bins(self.bins)
+        # initialize orientation and confidence
+        orientation = np.zeros((self.bins, 2))
+        confidence = np.zeros(self.bins)
+
+        for path in labels_path:
+            with open(path, "r") as f:
+                reader = csv.DictReader(f, delimiter=" ", fieldnames=self.fieldnames)
+                for line, row in enumerate(reader):
+                    if row["type"].lower() in self.categories:
+                        # convert from [-pi, pi] to [0, 2pi]
+                        angle = float(row["alpha"]) + np.pi # or new_alpha
+                        bin_idxs = self.get_bin_idxs(angle)
+                        # update orientation and confidence
+                        for idx in bin_idxs:
+                            angle_diff = angle - center_bins[idx]
+                            orientation[idx, :] = np.array([np.cos(angle_diff), np.sin(angle_diff)])
+                            confidence[idx] = 1
+                        # averaging dimensions
+                        dimensions = np.array([float(row["dh"]), float(row["dw"]), float(row["dl"])])
+                        dimensions -= self.dimensions_averages.get_item(row["type"])
+
+                        image_data = {
+                            "name": row["type"],
+                            "image_path": self.images_dir / (path.name.split(".")[0] + ".png"),
+                            "xmin": int(float(row["xmin"])),
+                            "ymin": int(float(row["ymin"])),
+                            "xmax": int(float(row["xmax"])),
+                            "ymax": int(float(row["ymax"])),
+                            "alpha": float(row["alpha"]),
+                            "orientation": orientation,
+                            "confidence": confidence,
+                            "dimensions": dimensions
+                        }
+
+                        IMAGES_DATA.append(image_data)
+        
+        return IMAGES_DATA
+
+    def generate_bins(self, bins):
+        """
+        It takes the number of bins you want to use and returns 
+        an array of angles that are the centers of those bins
+        Args:
+          bins: number of bins to use for the histogram
+        Returns:
+          the angle_bins array.
+        """
+        angle_bins = np.zeros(bins)
+        interval = 2 * np.pi / bins
+        for i in range(1, bins):
+            angle_bins[i] = i * interval
+        angle_bins += interval / 2  # center of bins
+
+        return angle_bins
+
+    def get_bin_idxs(self, angle):
+        """
+        It takes an angle and returns the indices of the bins that the angle falls into
+        Args:
+          angle: the angle of the line
+        Returns:
+          The bin_idxs are being returned.
+        """
+        interval = 2 * np.pi / self.bins
+
+        # range of bins from [0, 2pi]
+        bin_ranges = []
+        for i in range(0, self.bins):
+            bin_ranges.append((
+                (i * (interval - self.overlap)) % (2 * np.pi),
+                ((i * interval) + interval + self.overlap) % (2 * np.pi)
+            ))
+
+        def is_between(min, max, angle):
+            max = (max - min) if (max - min) > 0 else (max - min) + 2 * np.pi
+            angle = (angle - min) if (angle - min) > 0 else (angle - min) + 2 * np.pi
+            return angle < max
+
+        bin_idxs = []
+        for bin_idx, bin_range in enumerate(bin_ranges):
+            if is_between(bin_range[0], bin_range[1], angle):
+                bin_idxs.append(bin_idx)
+
+        return bin_idxs
+
+    def get_average_dimension(self, labels_path: str):
+        """
+        > For each line in the labels file, 
+        if the object type is in the categories list, add the dimensions
+        to the dimensions_averages object
+        Args:
+          labels_path (str): The path to the labels file.
+        """
+        for path in labels_path:
+            with open(path, "r") as f:
+                reader = csv.DictReader(f, delimiter=" ", fieldnames=self.fieldnames)
+                for line, row in enumerate(reader):
+                    if row["type"] in self.categories:
+                        self.dimensions_averages.add_item(
+                            row["type"], 
+                            row["dh"], 
+                            row["dw"], 
+                            row["dl"]
+                        )
 
 
 class KITTIDataset(Dataset):
@@ -536,11 +710,11 @@ if __name__ == "__main__":
     # {'Class': ['Pedestrian'], 'Box_2D': [[tensor([712]), tensor([143])], [tensor([811]), tensor([308])]], 'Dimensions': tensor([[ 0.1223, -0.1478,  0.3820]], dtype=torch.float64), 'Alpha': tensor([-0.2000], dtype=torch.float64), 'Orientation': tensor([[[0.1987, 0.9801],
     #         [0.0000, 0.0000]]], dtype=torch.float64), 'Confidence': tensor([[1., 0.]], dtype=torch.float64)}
 
-    dataset = KITTIDataset2(
-        dataset_dir="./data/KITTI",
-        dataset_sets_path="./data/KITTI/train_80.txt",
-        bin=2,
-    )
+    # dataset = KITTIDataset2(
+    #     dataset_dir="./data/KITTI",
+    #     dataset_sets_path="./data/KITTI/train_80.txt",
+    #     bin=2,
+    # )
 
     # dataloader = DataLoader(
     #     dataset, batch_size=1, shuffle=True, num_workers=1, pin_memory=True
@@ -562,17 +736,18 @@ if __name__ == "__main__":
     # Confidence:  tensor([[0., 1.]], dtype=torch.float64)
     # Dimensions:  tensor([[-7.2352, -2.6087, -7.1447]], dtype=torch.float64)
 
-    # test new alpha
-    angle = np.pi/2
-    bin = 2
-    anchors = dataset.compute_anchors(angle)
-    orientation = np.zeros((bin, 2))
-    confidence = np.zeros(bin)
-    for anchor in anchors:
-        # each angle is represented in sin and cos
-        orientation[anchor[0]] = np.array([np.cos(anchor[1]), np.sin(anchor[1])])
-        confidence[anchor[0]] = 1
+    # kitti dataset3
+    dataset = KITTIDataset3(
+        dataset_dir="./data/KITTI",
+        dataset_sets="./data/KITTI/val_95.txt",
+    )
 
-    confidence = confidence / np.sum(confidence)
-    orientation = np.expand_dims(orientation, axis=0)
-    print(anchors)
+    dataloader = DataLoader(
+        dataset, batch_size=1, shuffle=True, num_workers=1, pin_memory=True
+    )
+
+    for i, y in enumerate(dataloader):
+        print("Orientation: ", y[0])
+        print("Confidence: ", y[1])
+        print("Dimensions: ", y[2])
+        break

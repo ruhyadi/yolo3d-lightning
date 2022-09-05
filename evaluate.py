@@ -9,7 +9,7 @@ import torch
 from torchvision.transforms import transforms
 from pytorch_lightning import LightningModule
 from src.utils import Calib
-from src.utils.ClassAverages import ClassAverages
+from src.utils.averages import ClassAverages
 from src.utils.Math import (
     compute_orientaion,
     recover_angle,
