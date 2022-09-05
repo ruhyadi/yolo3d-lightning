@@ -320,7 +320,7 @@ class KITTIDataLoader(Dataset):
         self.images_data = self.orientation_confidence_flip(self.images_data, self.dims_avg)
 
     def __len__(self):
-        return len(self.images_path)
+        return len(self.images_data)
 
     def __getitem__(self, idx):
         """Get item"""
@@ -388,7 +388,7 @@ class KITTIDataLoader(Dataset):
         for i in range(len(images_data)):
             current = images_data[i]
             if current["name"] in self.categories:
-                dims_avg[current["name"]] += (
+                dims_avg[current["name"]] = (
                     dims_cnt[current["name"]] * dims_avg[current["name"]] 
                     + current["dims"]
                 )
@@ -537,13 +537,15 @@ if __name__ == "__main__":
 
     dataset = KITTIDataLoader(
         dataset_dir="./data/KITTI",
-        dataset_sets_path="./data/KITTI/val_95.txt",
+        dataset_sets_path="./data/KITTI/train_80.txt",
         bin=2,
     )
 
     dataloader = DataLoader(
         dataset, batch_size=1, shuffle=True, num_workers=1, pin_memory=True
     )
+    print(len(dataset))
+    print(len(dataloader))
 
     for i, (x, y) in enumerate(dataloader):
         print(x.shape)
