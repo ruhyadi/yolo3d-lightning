@@ -22,6 +22,77 @@ class RegressorNet(nn.Module):
         # orientation head, for orientation estimation
         self.orientation = nn.Sequential(
             nn.Linear(self.in_features, 256),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(256, 256),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(256, self.bins*2) # 4 bins
+        )
+
+        # confident head, for orientation estimation
+        self.confidence = nn.Sequential(
+            nn.Linear(self.in_features, 256),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(256, 256),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(256, self.bins),
+        )
+
+        # dimension head
+        self.dimension = nn.Sequential(
+            nn.Linear(self.in_features, 512),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(512, 512),
+            nn.ReLU(True),
+            nn.Dropout(),
+            nn.Linear(512, 3) # x, y, z
+        )
+
+    def forward(self, x):
+        x = self.model(x)
+        x = x.view(-1, self.in_features)
+
+        orientation = self.orientation(x)
+        orientation = orientation.view(-1, self.bins, 2)
+        orientation = F.normalize(orientation, dim=2)
+        
+        confidence = self.confidence(x)
+
+        dimension = self.dimension(x)
+
+        return orientation, confidence, dimension
+
+    def _get_in_features(self, net: nn.Module):
+
+        # TODO: add more models
+        in_features = {
+            'resnet': (lambda: net.fc.in_features * 7 * 7),
+            'vgg': (lambda: net.classifier[0].in_features)
+        }
+        
+        return in_features[(net.__class__.__name__).lower()]()
+
+
+class RegressorNet2(nn.Module):
+    def __init__(
+        self,
+        backbone: nn.Module,
+        bins: int,
+    ):
+        super().__init__()
+
+        # init model
+        self.in_features = self._get_in_features(backbone)
+        self.model = nn.Sequential(*(list(backbone.children())[:-2]))
+        self.bins = bins
+
+        # orientation head, for orientation estimation
+        self.orientation = nn.Sequential(
+            nn.Linear(self.in_features, 256),
             nn.LeakyReLU(0.1),
             nn.Dropout(),
             nn.Linear(256, self.bins*2), # 4 bins
@@ -88,6 +159,30 @@ def OrientationLoss(orient_batch, orientGT_batch, confGT_batch):
     return -1 * torch.cos(theta_diff - estimated_theta_diff).mean()
 
 
+def orientation_loss2(y_true, y_pred):
+    """
+    Orientation loss function
+    input:  y_true -- (batch_size, bin, 2) ground truth orientation value in cos and sin form.
+            y_pred -- (batch_size, bin, 2) estimated orientation value from the ConvNet
+    output: loss -- loss values for orientation
+    """
+
+    # sin^2 + cons^2
+    anchors = torch.sum(y_true ** 2, dim=2)
+    # check which bin valid
+    anchors = torch.gt(anchors, 0.5)
+    # add valid bin
+    anchors = torch.sum(anchors.type(torch.float32), dim=1)
+
+    # cos(true)cos(estimate) + sin(true)sin(estimate)
+    loss = (y_true[:, : ,0] * y_pred[:, :, 0] + y_true[:, :, 1] * y_pred[:, :, 1])
+    # the mean value in each bin
+    loss = torch.sum(loss, dim=1) / anchors
+    # sum the value at each bin
+    loss = torch.sum(loss)
+    loss = 2 - 2 * loss
+
+    return loss
 
 def get_model(backbone: str):
     """
@@ -117,11 +212,18 @@ def get_model(backbone: str):
 
 if __name__ == '__main__':
     
-    from torchvision.models import resnet18
-    from torchsummary import summary
+    # from torchvision.models import resnet18
+    # from torchsummary import summary
 
-    backbone = resnet18(pretrained=False)
-    model = RegressorNet(backbone, 2)
+    # backbone = resnet18(pretrained=False)
+    # model = RegressorNet(backbone, 2)
 
-    input_size = (3, 224, 224)
-    summary(model, input_size, device='cpu')
+    # input_size = (3, 224, 224)
+    # summary(model, input_size, device='cpu')
+
+    # test orientation loss
+    y_true = torch.tensor([[[0.0, 0.0], [0.9362, 0.3515]]])
+    y_pred = torch.tensor([[[0.0, 0.0], [0.9362, 0.3515]]])
+
+    print(y_true, "\n", y_pred)
+    print(orientation_loss2(y_true, y_pred))
