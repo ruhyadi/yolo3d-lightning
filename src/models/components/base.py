@@ -159,7 +159,7 @@ def OrientationLoss(orient_batch, orientGT_batch, confGT_batch):
     return -1 * torch.cos(theta_diff - estimated_theta_diff).mean()
 
 
-def orientation_loss2(y_true, y_pred):
+def orientation_loss2(y_pred, y_true):
     """
     Orientation loss function
     input:  y_true -- (batch_size, bin, 2) ground truth orientation value in cos and sin form.
@@ -226,4 +226,4 @@ if __name__ == '__main__':
     y_pred = torch.tensor([[[0.0, 0.0], [0.9362, 0.3515]]])
 
     print(y_true, "\n", y_pred)
-    print(orientation_loss2(y_true, y_pred))
+    print(orientation_loss2(y_pred, y_true))

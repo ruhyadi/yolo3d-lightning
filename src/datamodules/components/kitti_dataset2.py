@@ -229,112 +229,22 @@ class KITTIDataLoader(Dataset):
         crop_img = preprocess(crop_img)
 
         if flip > 0.5:
-            return crop_img, [data["orient_flipped"], data["conf_flipped"], data["dims"]]
-        else:
-            return crop_img, [data["orient"], data["conf"], data["dims"]]
-
-    def prepare_input_and_output(self, train_inst, image_dir):
-        """
-        prepare image patch for training
-        input:  train_inst -- input image for training
-        output: img -- cropped bbox
-                train_inst['dims'] -- object dimensions
-                train_inst['orient'] -- object orientation (or flipped orientation)
-                train_inst['conf_flipped'] -- orientation confidence
-        """
-        xmin = train_inst["xmin"] + np.random.randint(-self.jit, self.jit + 1)
-        ymin = train_inst["ymin"] + np.random.randint(-self.jit, self.jit + 1)
-        xmax = train_inst["xmax"] + np.random.randint(-self.jit, self.jit + 1)
-        ymax = train_inst["ymax"] + np.random.randint(-self.jit, self.jit + 1)
-
-        img = cv2.imread(image_dir)
-
-        if self.jit != 0:
-            xmin = max(xmin, 0)
-            ymin = max(ymin, 0)
-            xmax = min(xmax, img.shape[1] - 1)
-            ymax = min(ymax, img.shape[0] - 1)
-
-        img = copy.deepcopy(img[ymin : ymax + 1, xmin : xmax + 1]).astype(np.float32)
-
-        # flip the image
-        # 50% percent choose 1, 50% percent choose 0
-        flip = np.random.binomial(1, 0.5)
-        if flip > 0.5:
-            img = cv2.flip(img, 1)
-
-        # resize the image to standard size
-        img = cv2.resize(img, (self.norm_h, self.norm_w))
-        # minus the mean value in each channel
-        img = img - np.array([[[103.939, 116.779, 123.68]]])
-
-        ### Fix orientation and confidence
-        if flip > 0.5:
             return (
-                img,
-                train_inst["dims"],
-                train_inst["orient_flipped"],
-                train_inst["conf_flipped"],
+                crop_img,
+                {"orientation": data["orient_flipped"],
+                 "confidence": data["conf_flipped"],
+                 "dimensions": data["dims"],
+                },
             )
         else:
-            return img, train_inst["dims"], train_inst["orient"], train_inst["conf"]
+            return (
+                crop_img,
+                {"orientation": data["orient_flipped"],
+                 "confidence": data["conf_flipped"],
+                 "dimensions": data["dims"],
+                },
+            )
 
-    def data_gen(self, all_objs):
-        """
-        generate data for training
-        input: all_objs -- all objects used for training
-            batch_size -- number of images used for training at once
-        yield: x_batch -- (batch_size, 224, 224, 3),  input images to training process at each batch
-            d_batch -- (batch_size, 3),  object dimensions
-            o_batch -- (batch_size, 2, 2), object orientation
-            c_batch -- (batch_size, 2), angle confidence
-        """
-        num_obj = len(all_objs)
-
-        keys = list(range(num_obj))
-        np.random.shuffle(keys)
-
-        l_bound = 0
-        r_bound = self.batch_size if self.batch_size < num_obj else num_obj
-
-        while True:
-            if l_bound == r_bound:
-                l_bound = 0
-                r_bound = self.batch_size if self.batch_size < num_obj else num_obj
-                np.random.shuffle(keys)
-
-            currt_inst = 0
-            x_batch = np.zeros((r_bound - l_bound, 224, 224, 3))
-            d_batch = np.zeros((r_bound - l_bound, 3))
-            o_batch = np.zeros((r_bound - l_bound, self.bin, 2))
-            c_batch = np.zeros((r_bound - l_bound, self.bin))
-
-            for key in keys[l_bound:r_bound]:
-                # augment input image and fix object's orientation and confidence
-                (
-                    image,
-                    dimension,
-                    orientation,
-                    confidence,
-                ) = self.prepare_input_and_output(
-                    all_objs[key],
-                    all_objs[key]["image"],
-                )
-
-                x_batch[currt_inst, :] = image
-                d_batch[currt_inst, :] = dimension
-                o_batch[currt_inst, :] = orientation
-                c_batch[currt_inst, :] = confidence
-
-                currt_inst += 1
-
-            yield x_batch, [d_batch, o_batch, c_batch]
-
-            l_bound = r_bound
-            r_bound = r_bound + self.batch_size
-
-            if r_bound > num_obj:
-                r_bound = num_obj
 
 if __name__ == "__main__":
     """Testing KITTI Loader"""
@@ -353,7 +263,14 @@ if __name__ == "__main__":
 
     for i, (x, y) in enumerate(dataloader):
         print(x.shape)
-        print("Orientation: ", y[0])
-        print("Confidence: ", y[1])
-        print("Dimension: ", y[2])
+        print("Orientation: ", y["orientation"])
+        print("Confidence: ", y["confidence"])
+        print("Dimensions: ", y["dimensions"])
         break
+
+    # output
+    # torch.Size([1, 3, 224, 224])
+    # Orientation:  tensor([[[ 0.0000,  0.0000],
+    #         [ 0.9174, -0.3979]]], dtype=torch.float64)
+    # Confidence:  tensor([[0., 1.]], dtype=torch.float64)
+    # Dimensions:  tensor([[-7.2352, -2.6087, -7.1447]], dtype=torch.float64)
