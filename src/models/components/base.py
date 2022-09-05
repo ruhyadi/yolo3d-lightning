@@ -179,7 +179,7 @@ def orientation_loss2(y_pred, y_true):
     # the mean value in each bin
     loss = torch.sum(loss, dim=1) / anchors
     # sum the value at each bin
-    loss = torch.sum(loss)
+    loss = torch.mean(loss)
     loss = 2 - 2 * loss
 
     return loss

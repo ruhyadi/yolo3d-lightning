@@ -114,9 +114,7 @@ if __name__ == '__main__':
     train = dataset.train_dataloader()
 
     for img, label in train:
-        print(img.shape)
-        print(label)
-        break
+        print(label["orientation"])
 
     # output
     # torch.Size([1, 3, 224, 224])

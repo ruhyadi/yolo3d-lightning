@@ -4,7 +4,7 @@ tags:
 train: true
 test: false
 ckpt_path: null
-seed: null
+seed: 420
 datamodule:
   _target_: src.datamodules.kitti_datamodule.KITTIDataModule2
   dataset_path: ${paths.data_dir}
@@ -58,6 +58,19 @@ callbacks:
     max_depth: -1
   rich_progress_bar:
     _target_: pytorch_lightning.callbacks.RichProgressBar
+logger:
+  wandb:
+    _target_: pytorch_lightning.loggers.wandb.WandbLogger
+    save_dir: ${paths.output_dir}
+    offline: false
+    id: null
+    anonymous: null
+    project: yolo3d-regressor
+    log_model: false
+    prefix: ''
+    group: ''
+    tags: []
+    job_type: ''
 trainer:
   _target_: pytorch_lightning.Trainer
   default_root_dir: ${paths.output_dir}
@@ -73,6 +86,11 @@ trainer:
   strategy: ddp
   num_nodes: 1
   sync_batchnorm: true
+  gpus:
+  - 0
+  - 1
+  - 2
+  - 3
 paths:
   root_dir: ${oc.env:PROJECT_ROOT}
   data_dir: ${paths.root_dir}/data/KITTI
@@ -83,3 +101,4 @@ extras:
   ignore_warnings: false
   enforce_tags: true
   print_config: true
+name: new_network_&_dataset
