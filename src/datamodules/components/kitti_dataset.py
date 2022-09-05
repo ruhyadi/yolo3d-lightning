@@ -84,14 +84,14 @@ class KITTIDataset3(Dataset):
         # generate angle bins, center of each bin [pi/2, 3pi/2] for 2 bin
         center_bins = self.generate_bins(self.bins)
         # initialize orientation and confidence
-        orientation = np.zeros((self.bins, 2))
-        confidence = np.zeros(self.bins)
 
         for path in labels_path:
             with open(path, "r") as f:
                 reader = csv.DictReader(f, delimiter=" ", fieldnames=self.fieldnames)
                 for line, row in enumerate(reader):
                     if row["type"].lower() in self.categories:
+                        orientation = np.zeros((self.bins, 2))
+                        confidence = np.zeros(self.bins)
                         # convert from [-pi, pi] to [0, 2pi]
                         angle = float(row["alpha"]) + np.pi # or new_alpha
                         bin_idxs = self.get_bin_idxs(angle)
