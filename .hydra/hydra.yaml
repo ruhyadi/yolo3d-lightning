@@ -126,11 +126,11 @@ hydra:
     - hydra.job.name=train_ddp_process_3
     - hydra.mode=RUN
     task:
-    - experiment=model2
+    - experiment=model3
   job:
     name: train_ddp_process_3
     chdir: null
-    override_dirname: experiment=model2
+    override_dirname: experiment=model3
     id: ???
     num: ???
     config_name: train.yaml
@@ -163,15 +163,15 @@ hydra:
       debug: null
       local: default.yaml
       hparams_search: null
-      experiment: model2
+      experiment: model3
       hydra: default.yaml
       extras: default.yaml
       paths: default.yaml
       trainer: dgx.yaml
       logger: wandb.yaml
       callbacks: default.yaml
-      model: regressor2.yaml
-      datamodule: kitti_datamodule2.yaml
+      model: regressor3.yaml
+      datamodule: kitti_datamodule3.yaml
       hydra/env: default
       hydra/callbacks: null
       hydra/job_logging: colorlog

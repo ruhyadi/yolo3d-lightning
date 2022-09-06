@@ -19,7 +19,7 @@ ignore_warnings: True
 root: ${hydra:runtime.cwd}
 
 # checkpoint directory
-checkpoint_dir: ${root}/logs/train/runs/2022-09-05_13-50-07/checkpoints/epoch_009.ckpt
+checkpoint_dir: ${root}/logs/train/runs/2022-09-06_10-37-38/checkpoints/epoch_009.ckpt
 
 # dump dir
 dump_dir: ${root}/weights
@@ -33,4 +33,4 @@ input_sample:
 convert_to: "pytorch" # [pytorch, torchscript, onnx, tensorrt]
 
 # model name without extension
-name: ${dump_dir}/regressor_resnet18_new3
+name: ${dump_dir}/regressor_new_module
