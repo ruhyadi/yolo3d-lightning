@@ -60,14 +60,15 @@ class KITTIDataset3(Dataset):
         return len(self.images_data)
 
     def __getitem__(self, idx):
-
+        """Data loader looper"""
         image_data = self.images_data[idx]
 
+        image = self.preprocess_image(image_data)
         orientation = image_data["orientation"]
         confidence = image_data["confidence"]
         dimensions = image_data["dimensions"]
         
-        return [orientation, confidence, dimensions]
+        return image, {"orientation": orientation, "confidence": confidence, "dimensions": dimensions}
 
     def preprocess_labels(self, labels_path: str):
         """
@@ -120,6 +121,28 @@ class KITTIDataset3(Dataset):
                         IMAGES_DATA.append(image_data)
         
         return IMAGES_DATA
+
+    def preprocess_image(self, image_data: dict):
+        """
+        It takes an image and a bounding box, crops the image to the bounding box, 
+        resizes the cropped image
+        to the size of the input to the model, and then normalizes the image
+        Args:
+          image_data (dict): a dictionary containing the following keys:
+        Returns:
+          A tensor of the image
+        """
+        image = cv2.imread(str(image_data["image_path"]))
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        crop = image[image_data["ymin"]:image_data["ymax"]+1, image_data["xmin"]:image_data["xmax"]+1]
+        crop = cv2.resize(crop, (self.image_size, self.image_size), interpolation=cv2.INTER_CUBIC)
+
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        return transform(crop)
 
     def generate_bins(self, bins):
         """
@@ -746,8 +769,9 @@ if __name__ == "__main__":
         dataset, batch_size=1, shuffle=True, num_workers=1, pin_memory=True
     )
 
-    for i, y in enumerate(dataloader):
-        print("Orientation: ", y[0])
-        print("Confidence: ", y[1])
-        print("Dimensions: ", y[2])
+    for x, y in dataloader:
+        print(x.shape)
+        print("Orientation: ", y["orientation"])
+        print("Confidence: ", y["confidence"])
+        print("Dimensions: ", y["dimensions"])
         break
