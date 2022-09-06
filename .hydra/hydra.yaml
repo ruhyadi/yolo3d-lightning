@@ -125,12 +125,11 @@ hydra:
     - hydra.run.dir="/raid/didir/Repository/yolo3d-lightning"
     - hydra.job.name=train_ddp_process_3
     - hydra.mode=RUN
-    task:
-    - experiment=model3
+    task: []
   job:
     name: train_ddp_process_3
     chdir: null
-    override_dirname: experiment=model3
+    override_dirname: ''
     id: ???
     num: ???
     config_name: train.yaml
@@ -163,15 +162,15 @@ hydra:
       debug: null
       local: default.yaml
       hparams_search: null
-      experiment: model3
+      experiment: null
       hydra: default.yaml
       extras: default.yaml
       paths: default.yaml
       trainer: dgx.yaml
       logger: wandb.yaml
       callbacks: default.yaml
-      model: regressor3.yaml
-      datamodule: kitti_datamodule3.yaml
+      model: regressor.yaml
+      datamodule: kitti_datamodule.yaml
       hydra/env: default
       hydra/callbacks: null
       hydra/job_logging: colorlog

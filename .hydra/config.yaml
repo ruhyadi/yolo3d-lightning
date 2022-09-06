@@ -4,9 +4,9 @@ tags:
 train: true
 test: false
 ckpt_path: null
-seed: 420
+seed: null
 datamodule:
-  _target_: src.datamodules.kitti_datamodule.KITTIDataModule3
+  _target_: src.datamodules.kitti_datamodule.KITTIDataModule
   dataset_path: ${paths.data_dir}
   train_sets: ${paths.data_dir}/train_80.txt
   val_sets: ${paths.data_dir}/val_80.txt
@@ -14,7 +14,7 @@ datamodule:
   batch_size: 128
   num_worker: 32
 model:
-  _target_: src.models.regressor.RegressorModel3
+  _target_: src.models.regressor.RegressorModel
   net:
     _target_: src.models.components.base.RegressorNet
     backbone:
@@ -86,11 +86,6 @@ trainer:
   strategy: ddp
   num_nodes: 1
   sync_batchnorm: true
-  gpus:
-  - 0
-  - 1
-  - 2
-  - 3
 paths:
   root_dir: ${oc.env:PROJECT_ROOT}
   data_dir: ${paths.root_dir}/data/KITTI
@@ -101,6 +96,3 @@ extras:
   ignore_warnings: false
   enforce_tags: true
   print_config: true
-wandb:
-  name: model3
-name: model3

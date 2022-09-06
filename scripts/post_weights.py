@@ -64,7 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("--tag", type=str, default="v0.1", help="tag name")
     parser.add_argument("--name", type=str, default="Release v0.1", help="release name")
     parser.add_argument("--description", type=str, default="v0.1", help="release description")
-    parser.add_argument("--assets", type=tuple, default=["weights/detector_yolov5s.pt", "weights/regressor_resnet18.pt"], help="directory to save weights",)
+    parser.add_argument("--assets", type=tuple, default=["weights/detector_yolov5s.pt", "weights/regressor_resnet18.pt", "weights/regressor_resnet18.ckpt"], help="directory to save weights",)
     args = parser.parse_args()
 
     release_id = create_release(args.tag, args.name, args.description)["id"]

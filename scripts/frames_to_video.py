@@ -26,8 +26,8 @@ def generate(imgs_path, vid_path, fps=30, frame_size=(1242, 375), resize=True):
 if __name__ == "__main__":
     # create argparser
     parser = argparse.ArgumentParser(description="Generate frames to vid")
-    parser.add_argument("--imgs_path", type=str, default="outputs/2022-09-01/22-35-10/inference", help="path to imgs")
-    parser.add_argument("--vid_path", type=str, default="outputs/videos/002.mp4", help="path to vid")
+    parser.add_argument("--imgs_path", type=str, default="outputs/2022-09-06/16-19-57/inference", help="path to imgs")
+    parser.add_argument("--vid_path", type=str, default="outputs/videos/003.mp4", help="path to vid")
     parser.add_argument("--fps", type=int, default=24, help="fps")
     parser.add_argument("--frame_size", type=int, nargs=2, default=(int(1242), int(375)), help="frame size")
     parser.add_argument("--resize", action="store_true", help="resize")
