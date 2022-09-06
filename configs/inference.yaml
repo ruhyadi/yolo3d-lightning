@@ -4,7 +4,7 @@
 defaults:
   - _self_
   - detector: yolov5.yaml
-  - model: regressor.yaml
+  - model: regressor3.yaml
   - augmentation: inference_preprocessing.yaml
 
   # debugging config (enable through command line, e.g. `python train.py debug=default)
@@ -35,7 +35,7 @@ save_result: True
 
 # regressor weights
 # regressor_weights: ${root}/weights/regressor_resnet18.pt
-regressor_weights: ${root}/weights/regressor_old1.pt
+regressor_weights: ${root}/weights/old_model001.pt
 
 # inference type
 inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
@@ -45,4 +45,4 @@ inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
 source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
 
 # device to inference
-device: 'cuda:0'
+device: 'cpu'

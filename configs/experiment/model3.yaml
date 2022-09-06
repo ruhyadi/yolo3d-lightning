@@ -17,7 +17,7 @@ seed: 420
 
 trainer:
   min_epochs: 1
-  max_epochs: 10
+  max_epochs: 25
   gpus: [0,1,2,3]
   strategy: ddp
 

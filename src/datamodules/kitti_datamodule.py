@@ -6,7 +6,7 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from torchvision.transforms import transforms
 
-from src.datamodules.components.kitti_dataset import KITTIDataset, KITTIDataset3
+from src.datamodules.components.kitti_dataset import KITTIDataset, KITTIDataset2, KITTIDataset3
 
 class KITTIDataModule(LightningDataModule):
     def __init__(
@@ -78,8 +78,8 @@ class KITTIDataModule2(LightningDataModule):
 
     def setup(self, stage=None):
         """ Split dataset to training and validation """
-        self.KITTI_train = KITTIDataLoader(self.hparams.dataset_path, self.hparams.train_sets)
-        self.KITTI_val = KITTIDataLoader(self.hparams.dataset_path, self.hparams.val_sets)
+        self.KITTI_train = KITTIDataset2(self.hparams.dataset_path, self.hparams.train_sets)
+        self.KITTI_val = KITTIDataset2(self.hparams.dataset_path, self.hparams.val_sets)
         # self.KITTI_test = KITTIDataset(self.hparams.dataset_path, self.hparams.test_sets)
         # TODO: add test datasets dan test sets
 
@@ -147,27 +147,42 @@ class KITTIDataModule3(LightningDataModule):
 
 if __name__ == '__main__':
 
-    # dataset = KITTIDataModule(batch_size=1)
-    # dataset.setup()
-    # train = dataset.train_dataloader()
+    from time import time
 
-    # for img, label in train:
-    #     print(label)
-    #     break
+    start1 = time()
+    datamodule1 = KITTIDataModule(
+        dataset_path='./data/KITTI',
+        train_sets='./data/KITTI/train_95.txt',
+        val_sets='./data/KITTI/val_95.txt',
+        test_sets='./data/KITTI/test_95.txt',
+        batch_size=5,
+    )
+    datamodule1.setup()
+    trainloader = datamodule1.val_dataloader()
 
-    dataset = KITTIDataModule3(batch_size=1)
-    dataset.setup()
-    train = dataset.train_dataloader()
-
-    for img, label in train:
-        print(img.shape)
-        print(label)
+    for img, label in trainloader:
+        print(label["Orientation"])
         break
 
-    # output
-    # torch.Size([1, 3, 224, 224])
-    # {'orientation': tensor([[[0.9992, 0.0392],
-    #          [0.0000, 0.0000]]], dtype=torch.float64), 
-    #          'confidence': tensor([[1., 0.]], dtype=torch.float64), 
-    #          'dimensions': tensor([[-14.0929, -15.1018, -35.4715]], dtype=torch.float64)}
+    results1 = (time() - start1) * 1000
+
+    start2 = time()
+    datamodule2 = KITTIDataModule3(
+        dataset_path='./data/KITTI',
+        train_sets='./data/KITTI/train_95.txt',
+        val_sets='./data/KITTI/val_95.txt',
+        test_sets='./data/KITTI/test_95.txt',
+        batch_size=5,
+    )
+    datamodule2.setup()
+    trainloader = datamodule2.val_dataloader()
+
+    for img, label in trainloader:
+        print(label["orientation"])
+        break
+
+    results2 = (time() - start2) * 1000
+
+    print(f'Time taken for datamodule1: {results1} ms')
+    print(f'Time taken for datamodule2: {results2} ms')
     

@@ -4,7 +4,7 @@
 defaults:
   - _self_
   - detector: yolov5.yaml
-  - model: regressor2.yaml
+  - model: regressor.yaml
   - augmentation: inference_preprocessing.yaml
 
   # debugging config (enable through command line, e.g. `python train.py debug=default)
