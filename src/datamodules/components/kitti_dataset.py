@@ -719,59 +719,37 @@ class KITTIDataset2(Dataset):
 if __name__ == "__main__":
 
     from torch.utils.data import DataLoader
+    from time import time
 
-    # KITTI DATASET LOADER
-    # dataset = KITTIDataset()
-    # train_loader = DataLoader(dataset, 1)
-    # for img, label in train_loader:
-    #     print(img.shape)
-    #     print(label)
-    #     break
-
-    # output
-    # torch.Size([1, 3, 224, 224])
-    # {'Class': ['Pedestrian'], 'Box_2D': [[tensor([712]), tensor([143])], [tensor([811]), tensor([308])]], 'Dimensions': tensor([[ 0.1223, -0.1478,  0.3820]], dtype=torch.float64), 'Alpha': tensor([-0.2000], dtype=torch.float64), 'Orientation': tensor([[[0.1987, 0.9801],
-    #         [0.0000, 0.0000]]], dtype=torch.float64), 'Confidence': tensor([[1., 0.]], dtype=torch.float64)}
-
-    # dataset = KITTIDataset2(
-    #     dataset_dir="./data/KITTI",
-    #     dataset_sets_path="./data/KITTI/train_80.txt",
-    #     bin=2,
-    # )
-
-    # dataloader = DataLoader(
-    #     dataset, batch_size=1, shuffle=True, num_workers=1, pin_memory=True
-    # )
-    # print(len(dataset))
-    # print(len(dataloader))
-
-    # for i, (x, y) in enumerate(dataloader):
-    #     print(x.shape)
-    #     print("Orientation: ", y["orientation"])
-    #     print("Confidence: ", y["confidence"])
-    #     print("Dimensions: ", y["dimensions"])
-    #     break
-
-    # output
-    # torch.Size([1, 3, 224, 224])
-    # Orientation:  tensor([[[ 0.0000,  0.0000],
-    #         [ 0.9174, -0.3979]]], dtype=torch.float64)
-    # Confidence:  tensor([[0., 1.]], dtype=torch.float64)
-    # Dimensions:  tensor([[-7.2352, -2.6087, -7.1447]], dtype=torch.float64)
-
-    # kitti dataset3
-    dataset = KITTIDataset3(
-        dataset_dir="./data/KITTI",
+    start1 = time()
+    dataset1 = KITTIDataset(
+        dataset_path="./data/KITTI",
         dataset_sets="./data/KITTI/val_95.txt",
     )
 
-    dataloader = DataLoader(
-        dataset, batch_size=1, shuffle=True, num_workers=1, pin_memory=True
-    )
-
-    for x, y in dataloader:
-        print(x.shape)
-        print("Orientation: ", y["orientation"])
-        print("Confidence: ", y["confidence"])
-        print("Dimensions: ", y["dimensions"])
+    dataloader1 = DataLoader(
+        dataset1, batch_size=5, shuffle=False, num_workers=0, pin_memory=True)
+    
+    for img, label in dataloader1:
+        print(label["Dimensions"])
         break
+
+    results1 = (time() - start1) * 1000
+
+    start2 = time()
+    dataset2 = KITTIDataset3(
+        dataset_dir="./data/KITTI",
+        dataset_sets="./data/KITTI/val_95.txt", 
+    )
+    
+    dataloader2 = DataLoader(
+        dataset2, batch_size=5, shuffle=False, num_workers=0, pin_memory=True)
+    
+    for img, label in dataloader2:
+        print(label["dimensions"])
+        break
+
+    results2 = (time() - start2) * 1000
+
+    print("KITTI Dataset: {} ms".format(results1))
+    print("KITTI Dataset3: {} ms".format(results2))
