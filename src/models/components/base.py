@@ -70,8 +70,10 @@ class RegressorNet(nn.Module):
 
         # TODO: add more models
         in_features = {
-            'resnet': (lambda: net.fc.in_features * 7 * 7),
-            'vgg': (lambda: net.classifier[0].in_features)
+            'resnet': (lambda: net.fc.in_features * 7 * 7), # 512 * 7 * 7 = 25088
+            'vgg': (lambda: net.classifier[0].in_features), # 512 * 7 * 7 = 25088
+            # 'mobilenetv3_large': (lambda: (net.classifier[0].in_features) * 7 * 7), # 960 * 7 * 7 = 47040
+            'mobilenetv3': (lambda: (net.classifier[0].in_features) * 7 * 7), # 576 * 7 * 7 = 28416
         }
         
         return in_features[(net.__class__.__name__).lower()]()

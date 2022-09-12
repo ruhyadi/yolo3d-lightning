@@ -3,7 +3,7 @@ _target_: src.models.regressor.RegressorModel
 net:
   _target_: src.models.components.base.RegressorNet
   backbone:
-    _target_: torchvision.models.resnet18 # change model on this
+    _target_: torchvision.models.mobilenet_v3_small # change model on this
     pretrained: True
   bins: 2
 

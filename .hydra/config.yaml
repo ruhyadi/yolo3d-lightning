@@ -4,7 +4,7 @@ tags:
 train: true
 test: false
 ckpt_path: null
-seed: null
+seed: 42069
 datamodule:
   _target_: src.datamodules.kitti_datamodule.KITTIDataModule
   dataset_path: ${paths.data_dir}
@@ -18,9 +18,10 @@ model:
   net:
     _target_: src.models.components.base.RegressorNet
     backbone:
-      _target_: torchvision.models.resnet18
+      _target_: torchvision.models.mobilenet_v3_small
       pretrained: true
     bins: 2
+  optimizer: adam
   lr: 0.001
   momentum: 0.9
   w: 0.4
@@ -58,34 +59,23 @@ callbacks:
     max_depth: -1
   rich_progress_bar:
     _target_: pytorch_lightning.callbacks.RichProgressBar
-logger:
-  wandb:
-    _target_: pytorch_lightning.loggers.wandb.WandbLogger
-    save_dir: ${paths.output_dir}
-    offline: false
-    id: null
-    anonymous: null
-    project: yolo3d-regressor
-    log_model: false
-    prefix: ''
-    group: ''
-    tags: []
-    job_type: ''
 trainer:
   _target_: pytorch_lightning.Trainer
   default_root_dir: ${paths.output_dir}
   min_epochs: 1
-  max_epochs: 25
+  max_epochs: 10
   accelerator: gpu
   devices:
   - 0
-  - 1
-  - 2
-  - 3
   deterministic: false
-  strategy: ddp
   num_nodes: 1
   sync_batchnorm: true
+  limit_train_batches: 0.1
+  limit_val_batches: 0.1
+  gpus:
+  - 2
+  - 3
+  strategy: ddp
 paths:
   root_dir: ${oc.env:PROJECT_ROOT}
   data_dir: ${paths.root_dir}/data/KITTI
@@ -96,3 +86,6 @@ extras:
   ignore_warnings: false
   enforce_tags: true
   print_config: true
+logger:
+  project: resnet-yolo3d
+name: tuning_hyp

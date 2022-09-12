@@ -7,7 +7,7 @@ defaults:
   - override /datamodule: kitti_datamodule.yaml
   - override /model: regressor.yaml
   - override /callbacks: default.yaml
-  - override /logger: wandb.yaml
+  - override /logger: null
   - override /trainer: dgx.yaml
 
 # all parameters below will be merged with parameters from default configurations set above
@@ -21,7 +21,7 @@ trainer:
   limit_train_batches: 0.1
   limit_val_batches: 0.1
   gpus: [2, 3]
-  # strategy: ddp
+  strategy: ddp
 
 datamodule:
   train_sets: ${paths.data_dir}/train_80.txt
