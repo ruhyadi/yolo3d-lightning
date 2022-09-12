@@ -721,35 +721,36 @@ if __name__ == "__main__":
     from torch.utils.data import DataLoader
     from time import time
 
-    start1 = time()
-    dataset1 = KITTIDataset(
-        dataset_path="./data/KITTI",
-        dataset_sets="./data/KITTI/val_95.txt",
-    )
+    # start1 = time()
+    # dataset1 = KITTIDataset(
+    #     dataset_path="./data/KITTI",
+    #     dataset_sets="./data/KITTI/val_95.txt",
+    # )
 
-    dataloader1 = DataLoader(
-        dataset1, batch_size=5, shuffle=False, num_workers=0, pin_memory=True)
+    # dataloader1 = DataLoader(
+    #     dataset1, batch_size=5, shuffle=False, num_workers=0, pin_memory=True)
     
-    for img, label in dataloader1:
-        print(label["Dimensions"])
-        break
+    # for img, label in dataloader1:
+    #     print(label["Dimensions"])
+    #     break
 
-    results1 = (time() - start1) * 1000
+    # results1 = (time() - start1) * 1000
 
     start2 = time()
     dataset2 = KITTIDataset3(
         dataset_dir="./data/KITTI",
-        dataset_sets="./data/KITTI/val_95.txt", 
+        dataset_sets="./data/KITTI/all.txt",
+        categories=["car", "pedestrian", "cyclist"],
     )
     
     dataloader2 = DataLoader(
         dataset2, batch_size=5, shuffle=False, num_workers=0, pin_memory=True)
     
     for img, label in dataloader2:
-        print(label["dimensions"])
+        print(label["orientation"])
         break
 
     results2 = (time() - start2) * 1000
 
-    print("KITTI Dataset: {} ms".format(results1))
+    # print("KITTI Dataset: {} ms".format(results1))
     print("KITTI Dataset3: {} ms".format(results2))

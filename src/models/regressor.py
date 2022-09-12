@@ -12,6 +12,7 @@ class RegressorModel(LightningModule):
     def __init__(
         self,
         net: nn.Module,
+        optimizer: str = "adam",
         lr: float = 0.0001,
         momentum: float = 0.9,
         w: float = 0.4,
@@ -114,10 +115,12 @@ class RegressorModel(LightningModule):
         pass
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(params=self.parameters(), lr=self.hparams.lr)
-        # optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams.lr,
-        #     momentum=self.hparams.momentum
-        # )
+        if self.hparams.optimizer.lower() == "adam":
+            optimizer = torch.optim.Adam(params=self.parameters(), lr=self.hparams.lr)
+        elif self.hparams.optimizer.lower() == "sgd":
+            optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams.lr,
+                momentum=self.hparams.momentum
+            )
         # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5)
 
         return optimizer
@@ -241,6 +244,7 @@ class RegressorModel3(LightningModule):
     def __init__(
         self,
         net: nn.Module,
+        optimizer: str = "adam",
         lr: float = 0.0001,
         momentum: float = 0.9,
         w: float = 0.4,
@@ -344,10 +348,12 @@ class RegressorModel3(LightningModule):
         pass
 
     def configure_optimizers(self):
-        # optimizer = torch.optim.Adam(params=self.parameters(), lr=self.hparams.lr)
-        optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams.lr,
-            momentum=self.hparams.momentum
-        )
+        if self.hparams.optimizer.lower() == "adam":
+            optimizer = torch.optim.Adam(params=self.parameters(), lr=self.hparams.lr)
+        elif self.hparams.optimizer.lower() == "sgd":
+            optimizer = torch.optim.SGD(self.parameters(), lr=self.hparams.lr,
+                momentum=self.hparams.momentum
+            )
         # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5)
 
         return optimizer

@@ -33,15 +33,17 @@ hydra:
     direction: 'minimize'
 
     # total number of runs that will be executed
-    n_trials: 5
+    n_trials: 10
 
     # choose Optuna hyperparameter sampler
     # docs: https://optuna.readthedocs.io/en/stable/reference/samplers.html
     sampler:
       _target_: optuna.samplers.TPESampler
-      seed: 420
+      seed: 42069
       n_startup_trials: 10 # number of random sampling runs before optimization starts
 
     # define range of hyperparameters
     params:
-      model.lr: interval(0.0001, 0.1)
+      model.lr: interval(0.0001, 0.001)
+      datamodule.batch_size: choice(32, 64, 128)
+      model.optimizer: choice(adam, sgd)

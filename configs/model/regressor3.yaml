@@ -7,6 +7,8 @@ net:
     pretrained: True
   bins: 2
 
+optimizer: adam
+
 lr: 0.001
 momentum: 0.9
 w: 0.4
