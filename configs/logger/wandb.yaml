@@ -8,7 +8,7 @@ wandb:
   id: null # pass correct id to resume experiment!
   anonymous: null # enable anonymous logging
   project: "yolo3d-regressor"
-  log_model: False # upload lightning ckpts
+  log_model: True # upload lightning ckpts
   prefix: "" # a string to put at the beginning of metric keys
   # entity: "" # set to name of your wandb team
   group: ""

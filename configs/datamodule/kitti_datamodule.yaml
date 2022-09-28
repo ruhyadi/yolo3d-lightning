@@ -4,5 +4,5 @@ dataset_path: ${paths.data_dir} # data_dir is specified in config.yaml
 train_sets: ${paths.data_dir}/train_80.txt
 val_sets: ${paths.data_dir}/val_80.txt
 test_sets: ${paths.data_dir}/test_80.txt
-batch_size: 128
+batch_size: 64
 num_worker: 32

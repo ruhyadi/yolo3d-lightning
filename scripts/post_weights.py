@@ -61,10 +61,10 @@ def post_assets(assets, release_id):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Upload weights to github release")
-    parser.add_argument("--tag", type=str, default="v0.1", help="tag name")
-    parser.add_argument("--name", type=str, default="Release v0.1", help="release name")
-    parser.add_argument("--description", type=str, default="v0.1", help="release description")
-    parser.add_argument("--assets", type=tuple, default=["weights/detector_yolov5s.pt", "weights/regressor_resnet18.pt", "weights/regressor_resnet18.ckpt"], help="directory to save weights",)
+    parser.add_argument("--tag", type=str, default="v0.6", help="tag name")
+    parser.add_argument("--name", type=str, default="Release v0.6", help="release name")
+    parser.add_argument("--description", type=str, default="v0.6", help="release description")
+    parser.add_argument("--assets", type=tuple, default=["logs/train/runs/2022-09-28_10-36-08/checkpoints/epoch_007.ckpt", "logs/train/runs/2022-09-28_10-36-08/checkpoints/last.ckpt"], help="directory to save weights",)
     args = parser.parse_args()
 
     release_id = create_release(args.tag, args.name, args.description)["id"]
