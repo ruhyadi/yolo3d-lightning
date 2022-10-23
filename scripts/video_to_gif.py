@@ -11,8 +11,8 @@ def generate(video_path, gif_path, fps):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert video to gif")
-    parser.add_argument("--video_path", type=str, default="outputs/videos/001.mp4", help="Path to video")
-    parser.add_argument("--gif_path", type=str, default="outputs/gif/001.gif", help="Path to gif")
+    parser.add_argument("--video_path", type=str, default="outputs/videos/004.mp4", help="Path to video")
+    parser.add_argument("--gif_path", type=str, default="outputs/gif/002.gif", help="Path to gif")
     parser.add_argument("--fps", type=int, default=5, help="GIF fps")
     args = parser.parse_args()
 

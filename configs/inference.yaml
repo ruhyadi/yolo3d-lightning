@@ -45,4 +45,4 @@ inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
 source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
 
 # device to inference
-device: 'cpu'
+device: 'cuda'
