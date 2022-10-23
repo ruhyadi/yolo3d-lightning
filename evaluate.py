@@ -62,64 +62,67 @@ def evaluate(config: DictConfig):
                 preprocess.append(hydra.utils.instantiate(conf))
     preprocess = transforms.Compose(preprocess)
 
-    # Create output directory
-    os.makedirs(config.get("pred_dir"), exist_ok=True)
+    # check if prediction directory exists
+    if not os.path.exists(config.get("pred_dir")):
+        # Create output directory
+        os.makedirs(config.get("pred_dir"), exist_ok=True)
 
-    # evalaution on validation sets
-    imgs_path = images_sets(config.get("val_images_path"), config.get("val_sets"))
-    for img_path in tqdm(imgs_path):
-        img_name = img_path.split("/")[-1].split(".")[0]
-        img = cv2.imread(img_path, cv2.IMREAD_COLOR)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # detect object with Detector
-        dets = detector(img).crop(save=config.get("save_det2d"))
-        # dimension averages #TODO: depricated
-        DIMENSION = []
-        # loop thru detections
-        for det in dets:
-            # initialize object container
-            obj = KITTIObject()
-            obj.name = det["label"].split(" ")[0].capitalize()
-            obj.truncation = float(0.00)
-            obj.occlusion = int(-1)
-            box = [box.cpu().numpy() for box in det["box"]]
-            obj.xmin, obj.ymin, obj.xmax, obj.ymax = box[0], box[1], box[2], box[3]
+        # evalaution on validation sets
+        imgs_path = images_sets(config.get("val_images_path"), config.get("val_sets"))
+        for img_path in tqdm(imgs_path):
+            img_name = img_path.split("/")[-1].split(".")[0]
+            img = cv2.imread(img_path, cv2.IMREAD_COLOR)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # detect object with Detector
+            dets = detector(img).crop(save=config.get("save_det2d"))
+            # dimension averages #TODO: depricated
+            DIMENSION = []
+            # loop thru detections
+            for det in dets:
+                # initialize object container
+                obj = KITTIObject()
+                obj.name = det["label"].split(" ")[0].capitalize()
+                obj.truncation = float(0.00)
+                obj.occlusion = int(-1)
+                box = [box.cpu().numpy() for box in det["box"]]
+                obj.xmin, obj.ymin, obj.xmax, obj.ymax = box[0], box[1], box[2], box[3]
 
-            # preprocess img with torch.transforms
-            crop = preprocess(cv2.resize(det["im"], (224, 224)))
-            crop = crop.reshape((1, *crop.shape)).to(config.get("device"))
+                # preprocess img with torch.transforms
+                crop = preprocess(cv2.resize(det["im"], (224, 224)))
+                crop = crop.reshape((1, *crop.shape)).to(config.get("device"))
 
-            # regress 2D bbox with Regressor
-            [orient, conf, dim] = regressor(crop)
-            orient = orient.cpu().detach().numpy()[0, :, :]
-            conf = conf.cpu().detach().numpy()[0, :]
-            dim = dim.cpu().detach().numpy()[0, :]
+                # regress 2D bbox with Regressor
+                [orient, conf, dim] = regressor(crop)
+                orient = orient.cpu().detach().numpy()[0, :, :]
+                conf = conf.cpu().detach().numpy()[0, :]
+                dim = dim.cpu().detach().numpy()[0, :]
 
-            # dimension averages # TODO: depricated
-            try:
-                dim += class_averages.get_item(class_to_labels(det["cls"].cpu().numpy()))
-                DIMENSION.append(dim)
-            except:
-                dim = DIMENSION[-1]
+                # dimension averages # TODO: depricated
+                try:
+                    dim += class_averages.get_item(class_to_labels(det["cls"].cpu().numpy()))
+                    DIMENSION.append(dim)
+                except:
+                    dim = DIMENSION[-1]
 
-            obj.alpha = recover_angle(orient, conf, 2)
-            obj.h, obj.w, obj.l = dim[0], dim[1], dim[2]
-            obj.rot_global, rot_local = compute_orientaion(P2, obj)
-            obj.tx, obj.ty, obj.tz = translation_constraints(P2, obj, rot_local)
-            obj.score = np.round(det["conf"].cpu().numpy(), 2)
+                obj.alpha = recover_angle(orient, conf, 2)
+                obj.h, obj.w, obj.l = dim[0], dim[1], dim[2]
+                obj.rot_global, rot_local = compute_orientaion(P2, obj)
+                obj.tx, obj.ty, obj.tz = translation_constraints(P2, obj, rot_local)
+                obj.score = np.round(det["conf"].cpu().numpy(), 2)
 
-            # output prediction label
-            output_line = obj.member_to_list()
-            output_line = " ".join([str(i) for i in output_line]) + "\n"
+                # output prediction label
+                output_line = obj.member_to_list()
+                output_line = " ".join([str(i) for i in output_line]) + "\n"
 
-            # write results
-            with open(f"{config.get('pred_dir')}/{img_name}.txt", "a") as f:
-                f.write(output_line)
+                # write results
+                with open(f"{config.get('pred_dir')}/{img_name}.txt", "a") as f:
+                    f.write(output_line)
 
-    # evaluate results
-    log.info(f"Evaluating results")
-    results = get_evaluation(config.get("pred_dir"), config.get("gt_dir"))
-    log.info(f"Results: {results}")
+    else: 
+        # evaluate results
+        log.info(f"Evaluating results")
+        results = get_evaluation(config.get("pred_dir"), config.get("gt_dir"), config.get("classes"))
+        log.info(f"Results: {results}")
 
     return results
 
@@ -159,7 +162,7 @@ def class_to_labels(class_: int, list_labels: List = None):
     return list_labels[int(class_)]
 
 
-def get_evaluation(pred_path: str, gt_path: str):
+def get_evaluation(pred_path: str, gt_path: str, classes: List = [0]):
     """Evaluate results"""
     val_ids = [
         int(res.split("/")[-1].split(".")[0])
@@ -170,7 +173,7 @@ def get_evaluation(pred_path: str, gt_path: str):
 
     # compute mAP
     results = get_official_eval_result(
-        gt_annos=gt_annos, dt_annos=pred_annos, current_classes=0
+        gt_annos=gt_annos, dt_annos=pred_annos, current_classes=classes
     )
 
     return results

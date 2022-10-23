@@ -19,7 +19,7 @@ ignore_warnings: True
 root: ${hydra:runtime.cwd}
 
 # checkpoint directory
-checkpoint_dir: ${root}/logs/train/runs/2022-09-06_13-22-28/checkpoints/epoch_023.ckpt
+checkpoint_dir: ${root}/logs/train/runs/2022-09-28_10-36-08/checkpoints/last.ckpt
 
 # dump dir
 dump_dir: ${root}/weights
@@ -33,4 +33,4 @@ input_sample:
 convert_to: "pytorch" # [pytorch, torchscript, onnx, tensorrt]
 
 # model name without extension
-name: ${dump_dir}/old_model001
+name: ${dump_dir}/mobilenetv3-last

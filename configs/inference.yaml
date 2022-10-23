@@ -4,7 +4,7 @@
 defaults:
   - _self_
   - detector: yolov5.yaml
-  - model: regressor3.yaml
+  - model: regressor.yaml
   - augmentation: inference_preprocessing.yaml
 
   # debugging config (enable through command line, e.g. `python train.py debug=default)
@@ -35,7 +35,7 @@ save_result: True
 
 # regressor weights
 # regressor_weights: ${root}/weights/regressor_resnet18.pt
-regressor_weights: ${root}/weights/old_model001.pt
+regressor_weights: ${root}/weights/mobilenetv3-last.pt
 
 # inference type
 inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
