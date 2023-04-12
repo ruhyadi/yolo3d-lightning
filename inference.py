@@ -39,7 +39,7 @@ dotenv.load_dotenv(override=True)
 
 root = pyrootutils.setup_root(__file__, dotenv=True, pythonpath=True)
 
-@hydra.main(version_base="1.2", config_path=root / "configs", config_name="inference.yaml")
+@hydra.main(version_base=None, config_path=f"{root}/configs", config_name="inference.yaml")
 def inference(config: DictConfig):
     """Inference function"""
     # ONNX provider

@@ -1,6 +1,6 @@
 _target_: inference.detector_yolov5
 
-model_path: ${root}/weights/detector_yolov5s.pt
+model_path: ${root}/weights/yolov5s_kitti.pt
 cfg_path: ${root}/yolov5/models/yolov5s.yaml
-classes: 5
+classes: 3
 device: 'cuda:0'
