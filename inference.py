@@ -71,7 +71,7 @@ def inference(config: DictConfig):
         # pytorch regressor model
         log.info(f"Instantiating regressor <{config.model._target_}>")
         regressor: LightningModule = hydra.utils.instantiate(config.model)
-        regressor.load_state_dict(torch.load(config.get("regressor_weights")))
+        regressor.load_state_dict(torch.load(config.get("regressor_weights"), map_location="cpu"))
         regressor.eval().to(config.get("device"))
     elif config.get("inference_type") == "onnx":
         # onnx regressor model
@@ -109,6 +109,15 @@ def inference(config: DictConfig):
         img_name = img_path.split("/")[-1].split(".")[0]
         img = cv2.imread(img_path, cv2.IMREAD_COLOR)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        
+        # check if image shape 1242 x 375
+        if img.shape != (375, 1242, 3):
+            # crop center of image to 1242 x 375
+            src_h, src_w, _ = img.shape
+            dst_h, dst_w = 375, 1242
+            dif_h, dif_w = src_h - dst_h, src_w - dst_w
+            img = img[dif_h // 2 : src_h - dif_h // 2, dif_w // 2 : src_w - dif_w // 2, :]
+
         # detect object with Detector
         start_detect = time.time()
         dets = detector(img).crop(save=config.get("save_det2d"))

@@ -1,4 +1,20 @@
-"""Generate frames to vid"""
+"""
+Generate frames to vid
+Usage:
+python scripts/frames_to_video.py \
+    --imgs_path /path/to/imgs \
+    --vid_path /path/to/vid \
+    --fps 24 \
+    --frame_size 1242 375 \
+    --resize
+
+python scripts/frames_to_video.py \
+    --imgs_path outputs/2023-05-13/22-51-34/inference \
+    --vid_path tmp/output_videos/001.mp4 \
+    --fps 3 \
+    --frame_size 1550 387 \
+    --resize
+"""
 
 import argparse
 import cv2

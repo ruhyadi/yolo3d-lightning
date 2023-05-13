@@ -22,7 +22,7 @@ root: ${hydra:runtime.cwd}
 output_dir: ${root}/${hydra:run.dir}/inference
 
 # calib_file
-calib_file: ${root}/data/global_calib.txt
+calib_file: ${root}/assets/global_calib.txt
 
 # save 2D bounding box
 save_det2d: False
@@ -35,14 +35,14 @@ save_result: True
 
 # regressor weights
 # regressor_weights: ${root}/weights/regressor_resnet18.pt
-regressor_weights: ${root}/weights/mobilenetv3-last.pt
+regressor_weights: ${root}/weights/mobilenetv3-best.pt
 
 # inference type
 inference_type: pytorch # [pytorch, onnx, openvino, tensorrt]
 
 # source directory
-# source_dir: ${root}/data/demo/images
-source_dir: ${root}/data/demo/videos/2011_09_26/image_02/data
+# source_dir: ${root}/tmp/kitti/
+source_dir: ${root}/tmp/video_001
 
 # device to inference
-device: 'cuda'
+device: 'cpu'
