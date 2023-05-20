@@ -380,8 +380,7 @@ class KITTIDataset(Dataset):
 
         # Locattion: x, y, z
         Location = [line[11], line[12], line[13]]
-        # bring the KITTI center up to the middle of the object
-        Location[1] -= Dimension[0] / 2
+        # KITTI Location == center of 3D Object
 
         Orientation = np.zeros((self.bins, 2))
         Confidence = np.zeros(self.bins)
