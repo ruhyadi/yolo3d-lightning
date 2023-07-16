@@ -172,3 +172,4 @@ src/utils/plotting_dummy.py
 
 # folder
 tmp_
+outputs_old

@@ -40,9 +40,9 @@ python script/get_weights.py \
 Inference with `inference.py`:
 ```bash
 python inference.py \
-  source_dir="./data/demo/images" \
+  source_dir="./data/demo/videos/2011_09_26/image_02/data" \
   detector.model_path="./weights/detector_yolov5s.pt" \
-  regressor_weights="./weights/regressor_resnet18.pt"
+  regressor_weights="./weights/mobilenetv3-best.pt"
 ```
 
 ## ⚔️ Training

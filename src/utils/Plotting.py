@@ -565,6 +565,16 @@ class Plot3DBoxBev:
         patch = patches.PathPatch(pth, fill=False, color="green", label="prediction")
         self.ax2.add_patch(patch)
 
+        # draw z location of object
+        self.ax2.text(
+            pred_corners_2d[0, 0],
+            pred_corners_2d[0, 1],
+            f"z: {loc[2]:.2f}",
+            fontsize=8,
+            color="white",
+            bbox=dict(facecolor="green", alpha=0.4, pad=0.5),
+        )
+
     def compute_3dbox(self, bbox, dim, loc, rot_y):
         """compute 3d box"""
         # 2d bounding box
@@ -616,6 +626,16 @@ class Plot3DBoxBev:
         front_fill = patches.Rectangle((corners_2D[:, 1]), width, height, fill=True, color=color, alpha=0.4)
         self.ax.add_patch(patch)
         self.ax.add_patch(front_fill)
+
+        # draw text of location, dimension, and rotation
+        self.ax.text(
+            corners_2D[:, 1][0],
+            corners_2D[:, 1][1],
+            f"Loc: ({loc[0]:.2f}, {loc[1]:.2f}, {loc[2]:.2f})\nDim: ({dim[0]:.2f}, {dim[1]:.2f}, {dim[2]:.2f})\nYaw: {rot_y:.2f}",
+            fontsize=8,
+            color="white",
+            bbox=dict(facecolor=color, alpha=0.4, pad=0.5),
+        )
 
     def plot(
         self,
