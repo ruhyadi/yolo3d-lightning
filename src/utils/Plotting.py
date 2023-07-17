@@ -366,7 +366,7 @@ class Plot3DBox:
         z_corners = [0, 0, 0, obj.w, obj.w, obj.w, obj.w, 0]  # -w/2
 
         x_corners = [i - obj.l / 2 for i in x_corners]
-        y_corners = [i - obj.h for i in y_corners]
+        y_corners = [i - obj.h / 2 for i in y_corners]
         z_corners = [i - obj.w / 2 for i in z_corners]
 
         corners_3D = np.array([x_corners, y_corners, z_corners])
